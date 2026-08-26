@@ -57,8 +57,30 @@ services:
       - STACK_DIR=/stack
       - GPU_TOTAL_VRAM_GB=24
 
+  langflow:
+    image: langflowai/langflow:1.11.0   # pas "langflow/langflow", ce repo n'existe pas
+    container_name: langflow
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    volumes:
+      - langflow_data:/app/langflow
+    ports:
+      - "127.0.0.1:7860:7860"
+      - "10.8.0.1:7860:7860"
+    environment:
+      - LANGFLOW_CONFIG_DIR=/app/langflow
+      - LANGFLOW_AUTO_LOGIN=false
+      - LANGFLOW_SUPERUSER=admin
+      - LANGFLOW_SUPERUSER_PASSWORD=${LANGFLOW_SUPERUSER_PASSWORD}
+      - LANGFLOW_SECRET_KEY=${LANGFLOW_SECRET_KEY}
+      # Importe la variable comme "global variable" utilisable dans les composants
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - LANGFLOW_VARIABLES_TO_GET_FROM_ENVIRONMENT=OLLAMA_BASE_URL
+
 volumes:
   ollama_data:
+  langflow_data:
   webui_data:
     external: true
     name: open-webui

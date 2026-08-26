@@ -17,7 +17,21 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-STACK_DIR = Path(os.environ.get("STACK_DIR", Path(__file__).resolve().parents[2]))
+
+# En dev, main.py est dans <repo>/dashboard/backend/ : on remonte de trois crans.
+# En conteneur il est a /app/, sans arborescence au-dessus, d'ou le fallback :
+# STACK_DIR y est fourni par l'environnement.
+_stack_dir = os.environ.get("STACK_DIR")
+if not _stack_dir:
+    _parents = Path(__file__).resolve().parents
+    if len(_parents) < 3:
+        raise RuntimeError(
+            "STACK_DIR doit etre defini : impossible de deduire la racine du "
+            f"repo depuis {Path(__file__).resolve()}"
+        )
+    _stack_dir = _parents[2]
+
+STACK_DIR = Path(_stack_dir)
 MODELFILES_DIR = STACK_DIR / "modelfiles"
 PROMPTS_DIR = STACK_DIR / "prompts"
 STATIC_DIR = Path(__file__).resolve().parent / "static"

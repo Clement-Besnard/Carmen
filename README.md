@@ -25,6 +25,7 @@ Everything here is self-hosted on a single Ubuntu box with an RTX 3090.
 | `modelfiles/` | Generated Ollama Modelfiles (base model, parameters, system prompt) |
 | `builds/` | Shell scripts that render a Modelfile from its prompt and run `ollama create` |
 | `dashboard/` | A small FastAPI + React admin panel over the Ollama API |
+| `langflow-bridge/` | Small OpenAI-compatible proxy that exposes Langflow flows as models in Open WebUI |
 | `app.py` | Minimal Python client, the "does it answer at all" smoke test |
 | `clement_sample_1.wav` | Voice sample kept for the upcoming TTS / voice-cloning work |
 
@@ -41,6 +42,30 @@ Two are defined today, both built on Qwen3:
 The pattern is that a prompt lives in `prompts/<name>.md`, the build script wraps it into
 `modelfiles/<name>.Modelfile`, and Ollama creates the model from that. Editing the prompt
 and re-running the script is the whole iteration loop.
+
+### Langflow
+
+[Langflow](https://www.langflow.org/) runs on port 7860 for building agents visually.
+It's set to `LANGFLOW_AUTO_LOGIN=true`, so there's no login screen and no API key: like
+the dashboard, it's only bound to `127.0.0.1` and the VPN address.
+
+Open WebUI only speaks Ollama or OpenAI, and Langflow exposes neither — it only has
+`/api/v1/run/{flow}`. `langflow-bridge/` closes that gap: it lists Langflow's flows on
+`/v1/models` and translates `/v1/chat/completions` into a flow run. Every flow you build
+shows up as a model in Open WebUI, prefixed `langflow.`, with no extra step — the model
+list is fetched live, so a new flow appears as soon as you save it.
+
+In an Ollama component, point *Base URL* at `http://ollama:11434` — the compose service
+name, not the host's VPN address, which nothing listens on from inside the container. The
+same URL is exposed as the `OLLAMA_BASE_URL` global variable. Langflow's SSRF protection
+blocks private IPs by default, so `LANGFLOW_SSRF_ALLOWED_HOSTS` in the compose file
+allowlists the stack's own containers.
+
+Two details worth knowing:
+
+- A flow's model id is its endpoint name, or its slugified name if it has none.
+- The OpenAI chat id is passed through as Langflow's `session_id`, so memory components
+  keep their history per conversation.
 
 ### Dashboard
 
@@ -77,8 +102,12 @@ docker compose exec ollama ollama pull qwen3:8b
 ./builds/build-voice-assist-model.sh
 ```
 
-Open WebUI is then on <http://localhost:3000>, and the Ollama API on
-`127.0.0.1:11434`.
+Open WebUI is then on <http://localhost:3000>, Langflow on
+<http://localhost:7860>, and the Ollama API on `127.0.0.1:11434`.
+
+Open WebUI stores its connections in its own database, so `OPENAI_API_BASE_URLS` in the
+compose file only applies to a fresh install. On an existing one, add the bridge by hand
+under *Admin → Settings → Connections*: URL `http://langflow-bridge:7861/v1`, any key.
 
 Run the dashboard backend:
 
@@ -113,5 +142,6 @@ The backend reads a few environment variables:
 
 ## Notes
 
-Ollama is bound to `127.0.0.1` on purpose — the host is reachable over OpenVPN, and the
-API has no auth of its own. Open WebUI keeps `WEBUI_AUTH=true` for the same reason.
+Ollama, the dashboard, and Langflow are bound to `127.0.0.1` on purpose — the host is reachable over OpenVPN, and the
+API has no auth of its own — same for Langflow, which runs with auto-login. Open WebUI
+is the only service on the LAN, and it keeps `WEBUI_AUTH=true` for that reason.

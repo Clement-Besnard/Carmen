@@ -26,6 +26,7 @@ Everything here is self-hosted on a single Ubuntu box with an RTX 3090.
 | `builds/` | Shell scripts that render a Modelfile from its prompt and run `ollama create` |
 | `dashboard/` | A small FastAPI + React admin panel over the Ollama API |
 | `langflow-bridge/` | Small OpenAI-compatible proxy that exposes Langflow flows as models in Open WebUI |
+| `searxng/` | SearXNG config — the metasearch engine that gives the models web access |
 | `app.py` | Minimal Python client, the "does it answer at all" smoke test |
 | `clement_sample_1.wav` | Voice sample kept for the upcoming TTS / voice-cloning work |
 
@@ -42,6 +43,28 @@ Two are defined today, both built on Qwen3:
 The pattern is that a prompt lives in `prompts/<name>.md`, the build script wraps it into
 `modelfiles/<name>.Modelfile`, and Ollama creates the model from that. Editing the prompt
 and re-running the script is the whole iteration loop.
+
+### Web search
+
+[SearXNG](https://docs.searxng.org/) runs on port 8081 (8080 is taken by the dashboard)
+and is what gives the models access to the internet. It's a metasearch engine: it forwards
+the query to Google, Bing, DuckDuckGo and friends, and aggregates the results. No API key
+to manage, and no account-bound requests leaving the box.
+
+Two settings in `searxng/settings.yml` matter more than the rest:
+
+- `search.formats` must include `json`. It's HTML-only by default, and Open WebUI fails
+  quietly against an instance that only speaks HTML.
+- `server.limiter` is off. The anti-bot limiter rejects non-browser callers, which is
+  exactly what Open WebUI and Langflow are.
+
+Open WebUI queries it at `http://searxng:8080/search?q=<query>`. Web search is off per
+message by default — turn it on with the toggle in the chat's **+** menu, or enable it per
+model. Results go through the usual embedding-and-retrieval step; setting
+`web.search.bypass_embedding_and_retrieval` injects raw page content instead, which is
+faster but eats context.
+
+The secret key lives in `.env` as `SEARXNG_SECRET`, outside git.
 
 ### Langflow
 
@@ -103,7 +126,8 @@ docker compose exec ollama ollama pull qwen3:8b
 ```
 
 Open WebUI is then on <http://localhost:3000>, Langflow on
-<http://localhost:7860>, and the Ollama API on `127.0.0.1:11434`.
+<http://localhost:7860>, SearXNG on <http://localhost:8081>, and the Ollama API on
+`127.0.0.1:11434`.
 
 Open WebUI stores its connections in its own database, so `OPENAI_API_BASE_URLS` in the
 compose file only applies to a fresh install. On an existing one, add the bridge by hand

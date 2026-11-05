@@ -1,0 +1,27 @@
+# Instance SearXNG privée pour la stack : jamais exposée au LAN, interrogée
+# uniquement par Open WebUI et Langflow.
+use_default_settings: true
+
+general:
+  instance_name: "llm-stack search"
+  # Instance privée : pas de page de stats publique.
+  enable_metrics: false
+
+server:
+  # Le limiter anti-bot rejette les appels non-navigateur, donc ceux d'Open WebUI.
+  limiter: false
+  public_instance: false
+  image_proxy: false
+  method: "GET"
+
+search:
+  # Le format JSON n'est pas actif par défaut ; sans lui Open WebUI reçoit du
+  # HTML et échoue silencieusement.
+  formats:
+    - html
+    - json
+  safe_search: 0
+  autocomplete: ""
+
+ui:
+  static_use_hash: true

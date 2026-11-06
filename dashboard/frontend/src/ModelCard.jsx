@@ -1,37 +1,59 @@
 import { formatBytes } from "./api.js";
 
 export default function ModelCard({ model, busy, disabled, onToggle }) {
-  const meta = [model.parameter_size, model.quantization, formatBytes(model.size)]
-    .filter(Boolean)
-    .join(" · ");
+  const chips = [
+    model.size && formatBytes(model.size),
+    model.parameter_size,
+    model.quantization,
+  ].filter(Boolean);
 
   return (
-    <article className={`card ${model.loaded ? "on" : ""}`}>
+    <article className={`card${model.loaded ? " on" : ""}`}>
       <div className="card-head">
-        <div>
+        <div className="card-id">
           <h3>
             {model.name}
             {model.is_custom && <span className="tag">custom</span>}
           </h3>
-          <p className="meta mono">{meta}</p>
+          {chips.length > 0 && (
+            <div className="chips">
+              {chips.map((chip, i) => (
+                <span className="chip mono" key={i}>
+                  {chip}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <button
-          className={`toggle ${model.loaded ? "on" : ""}`}
+          type="button"
+          className={`toggle${model.loaded ? " on" : ""}`}
+          role="switch"
+          aria-checked={model.loaded}
+          aria-label={
+            model.loaded ? `Décharger ${model.name}` : `Charger ${model.name}`
+          }
           onClick={onToggle}
           disabled={busy || disabled}
-          aria-pressed={model.loaded}
-          aria-label={model.loaded ? `Décharger ${model.name}` : `Charger ${model.name}`}
         >
-          <span className="knob" />
+          <span className="knob" aria-hidden="true" />
         </button>
       </div>
-      <p className="state">
+      <p
+        className={`state ${busy ? "pending" : model.loaded ? "active" : "idle"}`}
+      >
+        <span className="dot" aria-hidden="true" />
         {busy ? (
-          <span className="pending">opération en cours…</span>
+          "opération en cours…"
         ) : model.loaded ? (
-          <span className="active">en VRAM · {formatBytes(model.size_vram)}</span>
+          <>
+            en VRAM
+            {model.size_vram && (
+              <span className="state-val">· {formatBytes(model.size_vram)}</span>
+            )}
+          </>
         ) : (
-          <span className="idle">déchargé</span>
+          "déchargé"
         )}
       </p>
     </article>

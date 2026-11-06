@@ -3,9 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Dashboard d'administration de la stack Ollama : édition des prompts, modèles, VRAM." />
     <title>llm-stack — dashboard</title>
-    <script type="module" crossorigin src="/assets/index-CVbYOzsO.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DAbhuMm5.css">
+    <script>
+      // Applique le thème avant le premier paint pour éviter un flash.
+      (function () {
+        var theme = "dark";
+        try {
+          theme =
+            localStorage.getItem("llm-theme") ||
+            (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        } catch (e) {}
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-IdCgTDMX.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CpWQGpAT.css">
   </head>
   <body>
     <div id="root"></div>

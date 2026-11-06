@@ -3,7 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Dashboard d'administration de la stack Ollama : édition des prompts, modèles, VRAM." />
     <title>llm-stack — dashboard</title>
+    <script>
+      // Applique le thème avant le premier paint pour éviter un flash.
+      (function () {
+        var theme = "dark";
+        try {
+          theme =
+            localStorage.getItem("llm-theme") ||
+            (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        } catch (e) {}
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

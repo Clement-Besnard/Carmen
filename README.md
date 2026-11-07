@@ -1,8 +1,10 @@
-# llm-stack
+# Carmen
 
 The base layer of my homelab LLM setup: [Ollama](https://ollama.com) serving open-weight
-models on a single Ubuntu box with an RTX 3090, and **Carmen**, the web dashboard that
-administers it.
+models on a single Ubuntu box with an RTX 3090, and the web dashboard that administers it.
+
+*Formerly `llm-stack`. The models volume keeps its old name, `llm-stack_ollama_data`, so
+renaming the project doesn't lose any downloaded model.*
 
 This repo deliberately stops there. Anything that *uses* the models — a chat UI, agents,
 web search, a voice loop — lives in its own project and connects to Ollama over a shared
@@ -16,7 +18,7 @@ Docker network. The rule is one-way: other projects depend on this one, never th
 | `prompts/` | System prompts in Markdown — the editable source of truth for each custom model |
 | `modelfiles/` | Generated Ollama Modelfiles (base model, parameters, system prompt) |
 | `builds/` | Shell scripts that render a Modelfile from its prompt and run `ollama create` |
-| `dashboard/` | Carmen: a FastAPI + React admin panel over the Ollama API |
+| `dashboard/` | The Carmen dashboard: a FastAPI + React admin panel over the Ollama API |
 | `config/` | Optional `services.json`: the apps Carmen should monitor (none by default) |
 
 ### Custom models
@@ -33,7 +35,7 @@ A prompt lives in `prompts/<name>.md`, the build script wraps it into
 and re-running the script — or saving and rebuilding from the dashboard — is the whole
 iteration loop.
 
-### Dashboard (Carmen)
+### Dashboard
 
 `dashboard/` covers what the Ollama CLI makes tedious:
 

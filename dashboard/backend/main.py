@@ -46,7 +46,7 @@ VRAM_TOTAL_BYTES = int(float(os.environ.get("GPU_TOTAL_VRAM_GB", "24")) * 1024**
 LOAD_TIMEOUT = httpx.Timeout(600.0, connect=5.0)
 SHORT_TIMEOUT = httpx.Timeout(30.0, connect=5.0)
 
-app = FastAPI(title="llm-stack dashboard")
+app = FastAPI(title="Carmen")
 
 
 # --------------------------------------------------------------------------

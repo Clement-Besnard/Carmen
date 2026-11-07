@@ -1,8 +1,11 @@
-# Le socle : Ollama et son dashboard d'administration (Carmen).
+# Carmen : Ollama et son dashboard d'administration.
 #
 # Les applications qui consomment les modeles (chat, agents, voix...) vivent
 # dans leurs propres projets et rejoignent le reseau `llm-net` pour atteindre
 # Ollama par son nom : http://ollama:11434. Le socle ne les connait pas.
+
+# Nom de projet fixe : ne depend plus du nom du dossier clone.
+name: carmen
 
 services:
   ollama:
@@ -60,3 +63,7 @@ networks:
 
 volumes:
   ollama_data:
+    # Nom historique, fige : le projet s'appelait llm-stack et ce volume
+    # contient les modeles telecharges. Sans ce nom, Docker en creerait un
+    # nouveau, vide, sous le nom carmen_ollama_data.
+    name: llm-stack_ollama_data

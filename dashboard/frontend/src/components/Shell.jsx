@@ -32,9 +32,6 @@ function Connection({ compact = false }) {
         <span>{compact && state === "up" ? status?.version ?? "" : label}</span>
         {compact && state === "up" && <span className="visually-hidden">{label}</span>}
       </p>
-      {!compact && status?.ollama_url && (
-        <p className="connection-url mono">{status.ollama_url.replace(/^https?:\/\//, "")}</p>
-      )}
     </div>
   );
 }

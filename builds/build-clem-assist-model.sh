@@ -2,7 +2,7 @@
 set -euo pipefail
 
 name="clem-assist"
-base="qwen3.6:27b"
+base="qwen3.8:27b"
 
 cat > "modelfiles/${name}.Modelfile" <<EOF
 FROM ${base}

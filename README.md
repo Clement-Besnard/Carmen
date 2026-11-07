@@ -23,7 +23,7 @@ Docker network. The rule is one-way: other projects depend on this one, never th
 
 Two are defined today, both built on Qwen3:
 
-- **`clem-assist`** — `qwen3.6:27b`, 64K context. A technical assistant tuned for concise,
+- **`clem-assist`** — `qwen3.8:27b`, 64K context. A technical assistant tuned for concise,
   command-first answers with homelab context baked into the system prompt.
 - **`voice-assist`** — `qwen3:8b`, 4K context. Short spoken-style replies, no lists, no
   Markdown: the model meant to sit in front of a TTS layer, where latency matters.

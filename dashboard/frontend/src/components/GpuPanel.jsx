@@ -1,5 +1,5 @@
 import { useStack } from "../lib/stack.jsx";
-import { gigabytes, gigabytesRound, percent, residency, splitModelName } from "../lib/format.js";
+import { gigabytes, gigabytesRound, percent, splitModelName } from "../lib/format.js";
 import { Link } from "../lib/router.jsx";
 import Button from "./Button.jsx";
 import Gauge from "./Gauge.jsx";
@@ -44,7 +44,7 @@ export default function GpuPanel() {
                 <span className="mono gpu-model">{splitModelName(loadedModel.name).base}</span>{" "}
                 <span className="soft">
                   {[
-                    residency(loadedModel.expires_at),
+                    loadedModel.base && `basé sur ${loadedModel.base}`,
                     loadedModel.parameter_size,
                     loadedModel.quantization,
                   ]

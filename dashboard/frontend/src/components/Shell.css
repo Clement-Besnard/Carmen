@@ -33,11 +33,6 @@
   color: var(--color-danger);
 }
 
-.connection-url {
-  padding-left: calc(8px + var(--space-2));
-  overflow-wrap: anywhere;
-}
-
 /* ---------- barre laterale ---------- */
 
 .sidebar {

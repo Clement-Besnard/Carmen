@@ -48,6 +48,7 @@ export function StackProvider({ children }) {
       const data = await api.models();
       setSnapshot({
         models: data.models,
+        diskTotal: data.disk_total,
         vramUsed: data.vram_used,
         vramTotal: data.vram_total,
       });
@@ -118,6 +119,7 @@ export function StackProvider({ children }) {
       phase: snapshot ? "ready" : error ? "unavailable" : "loading",
       models,
       loadedModel: models.find((m) => m.loaded) ?? null,
+      diskTotal: snapshot?.diskTotal ?? 0,
       vramUsed: snapshot?.vramUsed ?? 0,
       vramTotal: snapshot?.vramTotal ?? 0,
       status,

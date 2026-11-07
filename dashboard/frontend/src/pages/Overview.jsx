@@ -5,7 +5,7 @@ import Panel from "../components/Panel.jsx";
 import ServiceList from "../components/ServiceList.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
 import { api } from "../lib/api.js";
-import { clockTime, gigabytesRound } from "../lib/format.js";
+import { gigabytesRound } from "../lib/format.js";
 import { Link } from "../lib/router.jsx";
 import { useStack } from "../lib/stack.jsx";
 import { usePolling } from "../lib/usePolling.js";
@@ -14,13 +14,16 @@ import "./pages.css";
 const SERVICES_POLL_MS = 15000;
 
 function ModelsPanel() {
-  const { phase, models } = useStack();
-  const disk = models.reduce((sum, m) => sum + (m.size || 0), 0);
+  const { phase, models, diskTotal } = useStack();
   return (
     <Panel
       title="Modèles"
       titleId="overview-models"
-      meta={phase === "ready" ? `${models.length} installés · ${gigabytesRound(disk)} Go` : null}
+      meta={
+        phase === "ready"
+          ? `${models.length} modèle${models.length > 1 ? "s" : ""} · ${gigabytesRound(diskTotal)} Go sur disque`
+          : null
+      }
       actions={
         <Link to="/modeles" className="text-link">
           Tout voir
@@ -68,19 +71,12 @@ function ServicesPanel() {
 }
 
 export default function Overview() {
-  const { status, lastSuccess, hasServices } = useStack();
-  const meta = [
-    status?.version && `Ollama ${status.version}`,
-    lastSuccess && `actualisé à ${clockTime(lastSuccess)}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const { hasServices } = useStack();
 
   return (
     <>
       <PageHeader
         title="Vue d'ensemble"
-        meta={meta || "Connexion à Ollama…"}
       />
       <div className="stack">
         <GpuPanel />

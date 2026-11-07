@@ -141,6 +141,39 @@ class ModelRef(BaseModel):
     model: str = Field(min_length=1)
 
 
+# Poids d'un modele = blobs cites par les FROM de son Modelfile. Ne depend que
+# du digest du modele : on le met en cache pour ne pas rappeler /api/show (dont
+# la reponse liste tous les tenseurs) a chaque rafraichissement.
+_weights_cache: dict[str, tuple[str, ...]] = {}
+
+
+async def weights_key(name: str, digest: str) -> tuple[str, ...]:
+    if digest not in _weights_cache:
+        show = await ollama("POST", "/api/show", json={"model": name})
+        blobs = re.findall(r"^FROM\s+\S*(sha256-[0-9a-f]+)", show.get("modelfile", ""), re.M)
+        _weights_cache[digest] = tuple(sorted(blobs)) or (digest,)
+    return _weights_cache[digest]
+
+
+def pick_original(group: list[dict]) -> dict:
+    """Le modele d'origine d'un groupe qui partage les memes poids.
+
+    1. celui que le parent_model d'un autre membre designe (clem-assist -> qwen3.8:27b) ;
+    2. sinon celui dont le parent est sa propre etiquette du registre
+       (qwen3.8:27b -> qwen3.8:27b-q4_K_M) ;
+    3. sinon le plus ancien.
+    """
+    names = {m["name"]: m for m in group}
+    for m in group:
+        parent = m["parent_model"]
+        if parent in names and parent != m["name"]:
+            return names[parent]
+    for m in group:
+        if m["parent_model"].startswith(base_name(m["name"]) + ":"):
+            return m
+    return min(group, key=lambda m: m["modified_at"] or "")
+
+
 @app.get("/api/models")
 async def list_models() -> dict:
     tags = await ollama("GET", "/api/tags")
@@ -156,20 +189,47 @@ async def list_models() -> dict:
         details = entry.get("details") or {}
         models.append({
             "name": name,
+            "digest": entry.get("digest", ""),
             "size": entry.get("size", 0),
             "modified_at": entry.get("modified_at"),
             "parameter_size": details.get("parameter_size"),
             "quantization": details.get("quantization_level"),
             "family": details.get("family"),
+            "parent_model": (details.get("parent_model") or "").strip(),
             "loaded": live is not None,
             "size_vram": (live or {}).get("size_vram", 0),
             "expires_at": (live or {}).get("expires_at"),
             "is_custom": base_name(name) in customs,
         })
 
+    # Ollama deduplique les blobs : des modeles qui partagent leurs poids ne les
+    # stockent qu'une fois. On rattache chaque derive a son modele d'origine et
+    # on ne lui compte que ce qu'il ajoute (prompt, parametres : quelques Ko).
+    keys = await asyncio.gather(*(weights_key(m["name"], m["digest"]) for m in models))
+    groups: dict[tuple[str, ...], list[dict]] = {}
+    for model, key in zip(models, keys):
+        groups.setdefault(key, []).append(model)
+
+    disk_total = 0
+    for group in groups.values():
+        original = pick_original(group)
+        disk_total += original["size"]
+        for m in group:
+            if m is original:
+                m["base"] = None
+                m["disk_size"] = m["size"]
+            else:
+                m["base"] = original["name"]
+                m["disk_size"] = max(0, m["size"] - original["size"])
+                disk_total += m["disk_size"]
+
+    for m in models:
+        del m["digest"], m["parent_model"]
+
     models.sort(key=lambda m: (not m["loaded"], m["name"]))
     return {
         "models": models,
+        "disk_total": disk_total,
         "vram_used": sum(m["size_vram"] for m in models),
         "vram_total": VRAM_TOTAL_BYTES,
     }

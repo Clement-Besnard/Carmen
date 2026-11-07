@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Notice } from "../components/Banner.jsx";
 import Button from "../components/Button.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Panel from "../components/Panel.jsx";
@@ -121,10 +120,6 @@ export default function Settings() {
             </dl>
           )}
         </Panel>
-        <Notice>
-          Pas d'authentification : Nimbus n'écoute que sur 127.0.0.1 et sur le VPN (10.8.0.1).
-          Tout client VPN a un accès admin complet.
-        </Notice>
       </div>
     </>
   );

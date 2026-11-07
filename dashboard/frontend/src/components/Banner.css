@@ -35,6 +35,6 @@
 
 .notice {
   padding: 2px 0 2px var(--space-3);
-  border-left: var(--stroke-strong) solid var(--color-ink);
+  border-left: var(--stroke-strong) solid var(--color-accent-strong);
   color: var(--color-text-soft);
 }

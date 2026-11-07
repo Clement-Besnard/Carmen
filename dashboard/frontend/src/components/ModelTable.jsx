@@ -1,9 +1,12 @@
 import { useStack } from "../lib/stack.jsx";
-import { gigabytes, residency, splitModelName } from "../lib/format.js";
+import { gigabytes, humanBytes, splitModelName } from "../lib/format.js";
 import Toggle from "./Toggle.jsx";
 import "./ModelTable.css";
 
-/** Ce qu'on affiche sous le nom : l'operation en cours, sinon l'etat. */
+/**
+ * Sous le nom : l'operation en cours, sinon le modele d'origine pour un
+ * derive (meme poids, autre prompt ou parametres). Rien pour un original.
+ */
 function rowStatus(model, { busy, loadedModel }) {
   if (busy === model.name) {
     if (model.loaded) return "Déchargement…";
@@ -11,10 +14,12 @@ function rowStatus(model, { busy, loadedModel }) {
       ? `Chargement… remplace ${splitModelName(loadedModel.name).base}`
       : "Chargement…";
   }
-  const parts = [];
-  if (model.family) parts.push(model.family);
-  parts.push(model.loaded ? residency(model.expires_at) ?? "chargé" : "au repos");
-  return parts.join(" · ");
+  return model.base ? `basé sur ${model.base}` : null;
+}
+
+/** Place sur le disque : un derive ne compte que ce qu'il ajoute. */
+function diskLabel(model) {
+  return model.base ? humanBytes(model.disk_size) : `${gigabytes(model.disk_size)} Go`;
 }
 
 function ModelName({ name, custom }) {
@@ -60,7 +65,9 @@ export default function ModelTable({ models, compact = false }) {
             >
               <span className="model-main">
                 <ModelName name={model.name} custom={model.is_custom} />
-                <span className="model-status soft">{rowStatus(model, stack)}</span>
+                {rowStatus(model, stack) && (
+                  <span className="model-status soft">{rowStatus(model, stack)}</span>
+                )}
               </span>
               <span className="model-cell">
                 <span className="model-label">Taille </span>
@@ -73,9 +80,12 @@ export default function ModelTable({ models, compact = false }) {
                 </span>
               )}
               {!compact && (
-                <span className="model-cell mono">
+                <span
+                  className="model-cell mono"
+                  title={model.base ? `Poids partagés avec ${model.base}` : undefined}
+                >
                   <span className="model-label">Disque </span>
-                  {gigabytes(model.size)} Go
+                  {diskLabel(model)}
                 </span>
               )}
               <span className={`model-cell mono${model.loaded ? "" : " soft"}`}>

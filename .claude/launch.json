@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "nimbus-front",
+      "name": "carmen-front",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "dashboard/frontend", "run", "dev"],
       "port": 5173

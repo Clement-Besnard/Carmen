@@ -42,3 +42,22 @@
 .search-field:hover {
   border-color: var(--color-text-soft);
 }
+
+.code-sample {
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  border: var(--stroke) solid var(--color-line-soft);
+  border-radius: var(--radius);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+}
+
+/* Petit repere a droite d'un titre de page (ex. version d'Ollama). */
+.page-version {
+  align-self: center;
+  color: var(--color-text-soft);
+  font-size: var(--text-xs);
+}

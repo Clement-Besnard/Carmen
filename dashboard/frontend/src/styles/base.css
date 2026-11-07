@@ -85,8 +85,8 @@ code,
   z-index: 100;
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius);
-  background: var(--color-ink);
-  color: var(--color-on-ink);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
   font-weight: var(--weight-medium);
   text-decoration: none;
   transform: translateY(-200%);

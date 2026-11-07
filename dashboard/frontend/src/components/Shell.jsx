@@ -2,47 +2,24 @@ import { useEffect, useRef } from "react";
 import { Link, isActive, useRouter } from "../lib/router.jsx";
 import { useStack } from "../lib/stack.jsx";
 import StatusBanner from "./StatusBanner.jsx";
-import StatusDot from "./StatusDot.jsx";
 import "./Shell.css";
 
+// `needsServices` : entree affichee seulement si des services sont declares.
 export const NAV_ITEMS = [
   { to: "/", label: "Vue d'ensemble", short: "Accueil" },
   { to: "/modeles", label: "Modèles", short: "Modèles" },
   { to: "/custom", label: "Modèles custom", short: "Custom" },
-  { to: "/services", label: "Services", short: "Services" },
+  { to: "/services", label: "Services", short: "Services", needsServices: true },
   { to: "/parametres", label: "Paramètres", short: "Réglages" },
 ];
 
-/** Etat de la connexion a Ollama, en bas de la barre laterale / en haut sur mobile. */
-function Connection({ compact = false }) {
-  const { phase, error, status } = useStack();
-  const down = Boolean(error) && (error.kind !== "http" || phase === "unavailable");
-  const state = phase === "loading" ? "pending" : down ? "down" : "up";
-  const label = {
-    pending: "Connexion…",
-    down: error?.kind === "backend" ? "Dashboard injoignable" : "Ollama injoignable",
-    up: status?.version ? `Ollama ${status.version}` : "Ollama connecté",
-  }[state];
-
-  return (
-    <div className="connection" data-state={state} aria-live="polite">
-      <p className="connection-state">
-        <StatusDot state={state} />
-        <span>{compact && state === "up" ? status?.version ?? "" : label}</span>
-        {compact && state === "up" && <span className="visually-hidden">{label}</span>}
-      </p>
-      {!compact && status?.ollama_url && (
-        <p className="connection-url mono">{status.ollama_url.replace(/^https?:\/\//, "")}</p>
-      )}
-    </div>
-  );
-}
-
 function NavList({ variant }) {
   const { path } = useRouter();
+  const { hasServices } = useStack();
+  const items = NAV_ITEMS.filter((item) => !item.needsServices || hasServices);
   return (
     <ul className={`nav nav--${variant}`}>
-      {NAV_ITEMS.map((item) => (
+      {items.map((item) => (
         <li key={item.to}>
           <Link
             to={item.to}
@@ -79,19 +56,17 @@ export default function Shell({ children }) {
 
       <aside className="sidebar">
         <Link to="/" className="brand">
-          Nimbus
+          Carmen
         </Link>
         <nav aria-label="Navigation principale">
           <NavList variant="sidebar" />
         </nav>
-        <Connection />
       </aside>
 
       <header className="topbar">
         <Link to="/" className="brand">
-          Nimbus
+          Carmen
         </Link>
-        <Connection compact />
       </header>
 
       <main id="content" className="content">

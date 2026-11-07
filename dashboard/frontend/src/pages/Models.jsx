@@ -4,46 +4,42 @@ import ModelTable from "../components/ModelTable.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Panel from "../components/Panel.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
-import { gigabytes, gigabytesRound } from "../lib/format.js";
 import { useStack } from "../lib/stack.jsx";
 import "./pages.css";
 
 export default function Models() {
-  const { phase, models, vramUsed, vramTotal } = useStack();
+  const { phase, models, status } = useStack();
   const [query, setQuery] = useState("");
 
   const needle = query.trim().toLowerCase();
   const visible = needle ? models.filter((m) => m.name.toLowerCase().includes(needle)) : models;
-  const disk = models.reduce((sum, m) => sum + (m.size || 0), 0);
-
-  const meta =
-    phase === "ready"
-      ? `${models.length} installés · ${gigabytesRound(disk)} Go sur disque · ${gigabytes(vramUsed)} / ${gigabytesRound(vramTotal)} Go en VRAM`
-      : phase === "loading"
-        ? "Lecture de la liste…"
-        : "Liste indisponible";
 
   return (
     <>
       <PageHeader
         title="Modèles"
-        meta={meta}
         actions={
-          models.length > 4 && (
-            <>
-              <label htmlFor="model-filter" className="visually-hidden">
-                Filtrer les modèles
-              </label>
-              <input
-                id="model-filter"
-                type="search"
-                className="search-field"
-                placeholder="Filtrer"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </>
-          )
+          <>
+            {/* Repere discret : la version d'Ollama qui sert ces modeles. */}
+            {status?.version && (
+              <span className="page-version mono">Ollama {status.version}</span>
+            )}
+            {models.length > 4 && (
+              <>
+                <label htmlFor="model-filter" className="visually-hidden">
+                  Filtrer les modèles
+                </label>
+                <input
+                  id="model-filter"
+                  type="search"
+                  className="search-field"
+                  placeholder="Filtrer"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </>
+            )}
+          </>
         }
       />
       <div className="stack">

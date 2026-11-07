@@ -1,12 +1,11 @@
-import Button from "../components/Button.jsx";
 import GpuPanel from "../components/GpuPanel.jsx";
 import ModelTable from "../components/ModelTable.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Panel from "../components/Panel.jsx";
-import ServiceList, { serviceHref } from "../components/ServiceList.jsx";
+import ServiceList from "../components/ServiceList.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
 import { api } from "../lib/api.js";
-import { clockTime, gigabytesRound } from "../lib/format.js";
+import { gigabytesRound } from "../lib/format.js";
 import { Link } from "../lib/router.jsx";
 import { useStack } from "../lib/stack.jsx";
 import { usePolling } from "../lib/usePolling.js";
@@ -15,13 +14,16 @@ import "./pages.css";
 const SERVICES_POLL_MS = 15000;
 
 function ModelsPanel() {
-  const { phase, models } = useStack();
-  const disk = models.reduce((sum, m) => sum + (m.size || 0), 0);
+  const { phase, models, diskTotal } = useStack();
   return (
     <Panel
       title="Modèles"
       titleId="overview-models"
-      meta={phase === "ready" ? `${models.length} installés · ${gigabytesRound(disk)} Go` : null}
+      meta={
+        phase === "ready"
+          ? `${models.length} modèle${models.length > 1 ? "s" : ""} · ${gigabytesRound(diskTotal)} Go sur disque`
+          : null
+      }
       actions={
         <Link to="/modeles" className="text-link">
           Tout voir
@@ -43,7 +45,9 @@ function ModelsPanel() {
   );
 }
 
-function ServicesPanel({ services }) {
+/** Monte seulement si des services sont declares : pas de requete sinon. */
+function ServicesPanel() {
+  const services = usePolling(api.services, SERVICES_POLL_MS);
   const list = services.data?.services ?? [];
   const upCount = list.filter((s) => s.up).length;
   return (
@@ -57,7 +61,7 @@ function ServicesPanel({ services }) {
         </Link>
       }
     >
-      {services.phase === "loading" && <SkeletonRows count={4} label="Vérification des services" />}
+      {services.phase === "loading" && <SkeletonRows count={2} label="Vérification des services" />}
       {services.phase === "unavailable" && (
         <p className="panel-empty">Impossible de vérifier les services.</p>
       )}
@@ -67,36 +71,23 @@ function ServicesPanel({ services }) {
 }
 
 export default function Overview() {
-  const { status, lastSuccess } = useStack();
-  const services = usePolling(api.services, SERVICES_POLL_MS);
-  const webui = services.data?.services.find((s) => s.id === "open-webui") ?? {
-    port: 3000,
-    href: null,
-  };
-  const meta = [
-    status?.version && `Ollama ${status.version}`,
-    lastSuccess && `actualisé à ${clockTime(lastSuccess)}`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const { hasServices } = useStack();
 
   return (
     <>
       <PageHeader
         title="Vue d'ensemble"
-        meta={meta || "Connexion à Ollama…"}
-        actions={
-          <Button variant="primary" href={serviceHref(webui)}>
-            Ouvrir Open WebUI
-          </Button>
-        }
       />
       <div className="stack">
         <GpuPanel />
-        <div className="split">
+        {hasServices ? (
+          <div className="split">
+            <ModelsPanel />
+            <ServicesPanel />
+          </div>
+        ) : (
           <ModelsPanel />
-          <ServicesPanel services={services} />
-        </div>
+        )}
       </div>
     </>
   );

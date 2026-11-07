@@ -25,13 +25,30 @@ export function StackProvider({ children }) {
   const [lastSuccess, setLastSuccess] = useState(null);
   // Nom du modele dont une operation longue est en cours.
   const [busy, setBusy] = useState(null);
+  // Configuration du backend, dont les services declares. Ne depend pas
+  // d'Ollama : sert a decider quelles sections afficher.
+  const [config, setConfig] = useState(null);
   const statusRef = useRef(null);
+  const configRef = useRef(null);
+
+  const loadConfig = useCallback(() => {
+    if (configRef.current) return;
+    api
+      .config()
+      .then((c) => {
+        configRef.current = c;
+        setConfig(c);
+      })
+      .catch(() => {});
+  }, []);
 
   const refresh = useCallback(async () => {
+    loadConfig();
     try {
       const data = await api.models();
       setSnapshot({
         models: data.models,
+        diskTotal: data.disk_total,
         vramUsed: data.vram_used,
         vramTotal: data.vram_total,
       });
@@ -50,7 +67,7 @@ export function StackProvider({ children }) {
     } catch (err) {
       setError(err);
     }
-  }, []);
+  }, [loadConfig]);
 
   useEffect(() => {
     refresh();
@@ -102,9 +119,17 @@ export function StackProvider({ children }) {
       phase: snapshot ? "ready" : error ? "unavailable" : "loading",
       models,
       loadedModel: models.find((m) => m.loaded) ?? null,
+      diskTotal: snapshot?.diskTotal ?? 0,
       vramUsed: snapshot?.vramUsed ?? 0,
       vramTotal: snapshot?.vramTotal ?? 0,
       status,
+      config,
+      // null tant que la config n'est pas lue : on n'affiche rien plutot que
+      // de faire apparaitre puis disparaitre la section Services.
+      declaredServices: config?.services ?? null,
+      // Un fichier de services illisible garde la section visible : sinon
+      // l'erreur passerait inapercue (services declares mais rien d'affiche).
+      hasServices: Boolean(config?.services?.length || config?.services_error),
       error,
       stale: Boolean(snapshot && error),
       lastSuccess,
@@ -113,7 +138,7 @@ export function StackProvider({ children }) {
       runOn,
       toggleModel,
     };
-  }, [snapshot, status, error, lastSuccess, busy, refresh, runOn, toggleModel]);
+  }, [snapshot, status, config, error, lastSuccess, busy, refresh, runOn, toggleModel]);
 
   return <StackContext.Provider value={value}>{children}</StackContext.Provider>;
 }

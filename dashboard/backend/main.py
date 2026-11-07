@@ -7,6 +7,7 @@ Expose une petite API au-dessus de l'API Ollama :
 """
 
 import asyncio
+import json
 import os
 import re
 import time
@@ -140,6 +141,39 @@ class ModelRef(BaseModel):
     model: str = Field(min_length=1)
 
 
+# Poids d'un modele = blobs cites par les FROM de son Modelfile. Ne depend que
+# du digest du modele : on le met en cache pour ne pas rappeler /api/show (dont
+# la reponse liste tous les tenseurs) a chaque rafraichissement.
+_weights_cache: dict[str, tuple[str, ...]] = {}
+
+
+async def weights_key(name: str, digest: str) -> tuple[str, ...]:
+    if digest not in _weights_cache:
+        show = await ollama("POST", "/api/show", json={"model": name})
+        blobs = re.findall(r"^FROM\s+\S*(sha256-[0-9a-f]+)", show.get("modelfile", ""), re.M)
+        _weights_cache[digest] = tuple(sorted(blobs)) or (digest,)
+    return _weights_cache[digest]
+
+
+def pick_original(group: list[dict]) -> dict:
+    """Le modele d'origine d'un groupe qui partage les memes poids.
+
+    1. celui que le parent_model d'un autre membre designe (clem-assist -> qwen3.8:27b) ;
+    2. sinon celui dont le parent est sa propre etiquette du registre
+       (qwen3.8:27b -> qwen3.8:27b-q4_K_M) ;
+    3. sinon le plus ancien.
+    """
+    names = {m["name"]: m for m in group}
+    for m in group:
+        parent = m["parent_model"]
+        if parent in names and parent != m["name"]:
+            return names[parent]
+    for m in group:
+        if m["parent_model"].startswith(base_name(m["name"]) + ":"):
+            return m
+    return min(group, key=lambda m: m["modified_at"] or "")
+
+
 @app.get("/api/models")
 async def list_models() -> dict:
     tags = await ollama("GET", "/api/tags")
@@ -155,20 +189,47 @@ async def list_models() -> dict:
         details = entry.get("details") or {}
         models.append({
             "name": name,
+            "digest": entry.get("digest", ""),
             "size": entry.get("size", 0),
             "modified_at": entry.get("modified_at"),
             "parameter_size": details.get("parameter_size"),
             "quantization": details.get("quantization_level"),
             "family": details.get("family"),
+            "parent_model": (details.get("parent_model") or "").strip(),
             "loaded": live is not None,
             "size_vram": (live or {}).get("size_vram", 0),
             "expires_at": (live or {}).get("expires_at"),
             "is_custom": base_name(name) in customs,
         })
 
+    # Ollama deduplique les blobs : des modeles qui partagent leurs poids ne les
+    # stockent qu'une fois. On rattache chaque derive a son modele d'origine et
+    # on ne lui compte que ce qu'il ajoute (prompt, parametres : quelques Ko).
+    keys = await asyncio.gather(*(weights_key(m["name"], m["digest"]) for m in models))
+    groups: dict[tuple[str, ...], list[dict]] = {}
+    for model, key in zip(models, keys):
+        groups.setdefault(key, []).append(model)
+
+    disk_total = 0
+    for group in groups.values():
+        original = pick_original(group)
+        disk_total += original["size"]
+        for m in group:
+            if m is original:
+                m["base"] = None
+                m["disk_size"] = m["size"]
+            else:
+                m["base"] = original["name"]
+                m["disk_size"] = max(0, m["size"] - original["size"])
+                disk_total += m["disk_size"]
+
+    for m in models:
+        del m["digest"], m["parent_model"]
+
     models.sort(key=lambda m: (not m["loaded"], m["name"]))
     return {
         "models": models,
+        "disk_total": disk_total,
         "vram_used": sum(m["size_vram"] for m in models),
         "vram_total": VRAM_TOTAL_BYTES,
     }
@@ -282,85 +343,91 @@ async def rebuild_custom(name: str) -> dict:
 
 
 # --------------------------------------------------------------------------
-# Services de la stack et configuration (lecture seule)
+# Services declares et configuration (lecture seule)
 # --------------------------------------------------------------------------
 
-# `url` est l'adresse vue depuis le conteneur du dashboard (reseau Docker) ;
-# `port` est le port publie sur l'hote, utilise par le front pour le lien.
-# Les URL sont surchargeables pour lancer le backend hors Docker.
-SERVICES = [
-    {
-        "id": "open-webui",
-        "name": "Open WebUI",
-        "description": "Interface de chat",
-        "port": 3000,
-        "has_ui": True,
-        "url": os.environ.get("OPEN_WEBUI_URL", "http://open-webui:8080"),
-    },
-    {
-        "id": "langflow",
-        "name": "Langflow",
-        "description": "Construction d'agents",
-        "port": 7860,
-        "has_ui": True,
-        "url": os.environ.get("LANGFLOW_URL", "http://langflow:7860"),
-    },
-    {
-        "id": "searxng",
-        "name": "SearXNG",
-        "description": "Recherche web des modèles",
-        "port": 8081,
-        "has_ui": True,
-        "url": os.environ.get("SEARXNG_URL", "http://searxng:8080"),
-    },
-    {
-        "id": "langflow-bridge",
-        "name": "Bridge Langflow",
-        "description": "Flows Langflow exposés comme modèles",
-        "port": 7861,
-        "has_ui": False,
-        "url": os.environ.get("LANGFLOW_BRIDGE_URL", "http://langflow-bridge:7861"),
-    },
-]
+# Carmen ne suppose aucun service : il ne surveille que ceux declares dans ce
+# fichier, propre a chaque installation. Absent ou vide : aucun service.
+SERVICES_FILE = Path(os.environ.get("SERVICES_FILE") or STACK_DIR / "config" / "services.json")
 
 SERVICE_TIMEOUT = httpx.Timeout(3.0, connect=2.0)
 
-# Hote des liens "Ouvrir". Vide : le front reprend l'hote de la page, ce qui
-# marche quand le dashboard tourne sur le meme serveur que la stack. A fixer
-# (ex. 10.8.0.1) quand le dashboard tourne ailleurs, sur un poste client.
-SERVICES_PUBLIC_HOST = os.environ.get("SERVICES_PUBLIC_HOST", "").strip()
+
+def slugify(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "service"
+
+
+def read_services() -> list[dict]:
+    """Lit et valide SERVICES_FILE. Une erreur de format remonte telle quelle
+    au front, avec le chemin du fichier, plutot que d'etre ignoree."""
+    if not SERVICES_FILE.is_file():
+        return []
+    try:
+        raw = json.loads(SERVICES_FILE.read_text(encoding="utf-8") or "[]")
+    except json.JSONDecodeError as exc:
+        raise HTTPException(500, f"{SERVICES_FILE} n'est pas du JSON valide : {exc}")
+    if not isinstance(raw, list):
+        raise HTTPException(500, f"{SERVICES_FILE} doit contenir une liste de services")
+
+    services, seen = [], set()
+    for index, entry in enumerate(raw, 1):
+        if not isinstance(entry, dict) or not entry.get("name") or not entry.get("url"):
+            raise HTTPException(
+                500, f"{SERVICES_FILE}, service n°{index} : « name » et « url » sont requis"
+            )
+        slug = slugify(entry["name"])
+        while slug in seen:
+            slug += "-2"
+        seen.add(slug)
+        services.append({
+            "id": slug,
+            "name": str(entry["name"]),
+            "description": entry.get("description") or None,
+            # url : adresse testee par le backend (ex. reseau Docker).
+            "url": str(entry["url"]),
+            # link : adresse ouverte par le navigateur. Absente : pas de lien.
+            "link": entry.get("link") or None,
+            # container : nom du conteneur, pour la commande de diagnostic.
+            "container": entry.get("container") or None,
+        })
+    return services
 
 
 async def probe(client: httpx.AsyncClient, service: dict) -> dict:
     """Un service "repond" s'il renvoie une reponse HTTP, quel que soit le code :
     on teste la joignabilite, pas une route precise."""
-    public = {k: v for k, v in service.items() if k != "url"}
-    public["href"] = (
-        f"http://{SERVICES_PUBLIC_HOST}:{service['port']}" if SERVICES_PUBLIC_HOST else None
-    )
     started = time.perf_counter()
     try:
         response = await client.get(service["url"])
     except httpx.RequestError as exc:
-        return {**public, "up": False, "latency_ms": None, "error": type(exc).__name__}
+        return {**service, "up": False, "latency_ms": None, "error": type(exc).__name__}
     latency = round((time.perf_counter() - started) * 1000)
-    return {**public, "up": True, "latency_ms": latency, "status_code": response.status_code}
+    return {**service, "up": True, "latency_ms": latency, "status_code": response.status_code}
 
 
 @app.get("/api/services")
 async def list_services() -> dict:
+    services = read_services()
     async with httpx.AsyncClient(timeout=SERVICE_TIMEOUT, follow_redirects=False) as client:
-        results = await asyncio.gather(*(probe(client, s) for s in SERVICES))
+        results = await asyncio.gather(*(probe(client, s) for s in services))
     return {"services": list(results)}
 
 
 @app.get("/api/config")
 async def config() -> dict:
+    """Configuration en lecture seule. Ne depend pas d'Ollama : le front s'en
+    sert au demarrage pour savoir quelles sections afficher."""
+    try:
+        services, services_error = read_services(), None
+    except HTTPException as exc:
+        services, services_error = [], exc.detail
     return {
         "ollama_base_url": OLLAMA_BASE_URL,
         "stack_dir": str(STACK_DIR),
         "gpu_total_vram_gb": VRAM_TOTAL_BYTES / 1024**3,
-        "services_public_host": SERVICES_PUBLIC_HOST or None,
+        "services_file": str(SERVICES_FILE),
+        "services": [{"id": s["id"], "name": s["name"], "link": s["link"]} for s in services],
+        "services_error": services_error,
     }
 
 

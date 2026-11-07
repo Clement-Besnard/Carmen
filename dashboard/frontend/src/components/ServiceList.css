@@ -1,6 +1,6 @@
 .service-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 56px 112px 64px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 180px) 112px 64px;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3) var(--space-4);
@@ -8,7 +8,7 @@
 }
 
 .service-list--compact .service-row {
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   padding-top: var(--space-2);
   padding-bottom: var(--space-2);
 }
@@ -33,6 +33,21 @@
 
 .service-list--compact .service-name {
   font-weight: var(--weight-regular);
+}
+
+a.service-name {
+  text-decoration: none;
+}
+
+a.service-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.service-host {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .service-diagnostic {

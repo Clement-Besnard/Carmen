@@ -40,15 +40,16 @@ export function splitModelName(name) {
   return { base: name.slice(0, index), tag: name.slice(index + 1) };
 }
 
-/**
- * Ollama renvoie un expires_at lointain (an 2300+) pour keep_alive: -1.
- * On le traduit en "resident" plutot qu'en date absurde.
- */
-export function residency(expiresAt, now = Date.now()) {
-  if (!expiresAt) return null;
-  const remaining = new Date(expiresAt).getTime() - now;
-  if (remaining > 365 * 24 * 3600 * 1000) return "résident";
-  if (remaining <= 0) return "en cours de libération";
-  const minutes = Math.round(remaining / 60000);
-  return minutes < 1 ? "libéré dans moins d'une minute" : `libéré dans ${minutes} min`;
+/** Taille lisible a toute echelle : 1305 -> "1,3 Ko", 17741872154 -> "16,5 Go". */
+export function humanBytes(bytes) {
+  const value = bytes || 0;
+  if (value < 1024) return value === 0 ? "0 Ko" : "< 1 Ko";
+  const units = ["Ko", "Mo", "Go", "To"];
+  let size = value / 1024;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+  return `${decimal.format(size)} ${units[unit]}`;
 }

@@ -8,7 +8,7 @@ import { useStack } from "../lib/stack.jsx";
 import "./pages.css";
 
 export default function Models() {
-  const { phase, models } = useStack();
+  const { phase, models, status } = useStack();
   const [query, setQuery] = useState("");
 
   const needle = query.trim().toLowerCase();
@@ -19,21 +19,27 @@ export default function Models() {
       <PageHeader
         title="Modèles"
         actions={
-          models.length > 4 && (
-            <>
-              <label htmlFor="model-filter" className="visually-hidden">
-                Filtrer les modèles
-              </label>
-              <input
-                id="model-filter"
-                type="search"
-                className="search-field"
-                placeholder="Filtrer"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </>
-          )
+          <>
+            {/* Repere discret : la version d'Ollama qui sert ces modeles. */}
+            {status?.version && (
+              <span className="page-version mono">Ollama {status.version}</span>
+            )}
+            {models.length > 4 && (
+              <>
+                <label htmlFor="model-filter" className="visually-hidden">
+                  Filtrer les modèles
+                </label>
+                <input
+                  id="model-filter"
+                  type="search"
+                  className="search-field"
+                  placeholder="Filtrer"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </>
+            )}
+          </>
         }
       />
       <div className="stack">

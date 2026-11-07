@@ -54,3 +54,10 @@
   font-size: var(--text-xs);
   line-height: var(--leading-code);
 }
+
+/* Petit repere a droite d'un titre de page (ex. version d'Ollama). */
+.page-version {
+  align-self: center;
+  color: var(--color-text-soft);
+  font-size: var(--text-xs);
+}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Link, isActive, useRouter } from "../lib/router.jsx";
 import { useStack } from "../lib/stack.jsx";
+import Logo from "./Logo.jsx";
 import StatusBanner from "./StatusBanner.jsx";
 import "./Shell.css";
 
@@ -56,6 +57,7 @@ export default function Shell({ children }) {
 
       <aside className="sidebar">
         <Link to="/" className="brand">
+          <Logo />
           Carmen
         </Link>
         <nav aria-label="Navigation principale">
@@ -65,6 +67,7 @@ export default function Shell({ children }) {
 
       <header className="topbar">
         <Link to="/" className="brand">
+          <Logo />
           Carmen
         </Link>
       </header>

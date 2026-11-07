@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import "./PageHeader.css";
 
 /**
@@ -6,10 +5,6 @@ import "./PageHeader.css";
  * `crumb` : petit libelle au-dessus du titre (ex. "Modèles custom /").
  */
 export default function PageHeader({ title, meta, actions, crumb, mono = false }) {
-  useEffect(() => {
-    document.title = `${title} — Carmen`;
-  }, [title]);
-
   return (
     <header className="page-header">
       <div className="page-header-text">

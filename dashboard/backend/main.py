@@ -440,4 +440,9 @@ if STATIC_DIR.is_dir():
 
     @app.get("/{full_path:path}")
     async def spa(full_path: str) -> FileResponse:
+        # Fichiers a la racine du build (favicon, icones, manifest) servis
+        # tels quels ; tout le reste est une route du front -> index.html.
+        candidate = (STATIC_DIR / full_path).resolve()
+        if full_path and candidate.is_file() and candidate.is_relative_to(STATIC_DIR.resolve()):
+            return FileResponse(candidate)
         return FileResponse(STATIC_DIR / "index.html")

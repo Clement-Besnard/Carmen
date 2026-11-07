@@ -6,3 +6,6 @@
 *.bin
 modelfiles/*.Modelfile
 prompt/*.md
+__pycache__/
+# Build Vite, regenere par le Dockerfile
+dashboard/backend/static/

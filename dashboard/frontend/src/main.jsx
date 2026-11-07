@@ -1,10 +1,26 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
+
+// Polices auto-hebergees (sous-ensemble latin) : aucune requete vers un CDN.
+import "@fontsource/geist-sans/latin-400.css";
+import "@fontsource/geist-sans/latin-500.css";
+import "@fontsource/geist-sans/latin-600.css";
+import "@fontsource/geist-mono/latin-400.css";
+import "@fontsource/geist-mono/latin-500.css";
+
+import "./styles/tokens.css";
+import "./styles/base.css";
+
 import App from "./App.jsx";
-import "./styles.css";
+import { RouterProvider } from "./lib/router.jsx";
+import { StackProvider } from "./lib/stack.jsx";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <RouterProvider>
+      <StackProvider>
+        <App />
+      </StackProvider>
+    </RouterProvider>
   </React.StrictMode>
 );

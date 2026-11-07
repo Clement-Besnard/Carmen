@@ -1,0 +1,93 @@
+/*
+ * Design tokens Nimbus — source unique pour couleurs, typo, espacements,
+ * rayons et mouvements. Aucun composant ne contient de valeur en dur.
+ *
+ * Direction "console" : fond papier legerement grise, panneaux blancs a filet
+ * fin. Le blanc est l'accent : il marque ce qui est actif (page courante,
+ * panneaux), le noir porte l'action principale (un bouton par ecran).
+ */
+
+:root {
+  /* ---------- couleurs ---------- */
+  --color-canvas: #f4f3ef;        /* fond de page */
+  --color-sidebar: #ebeae5;       /* barre laterale, barre mobile */
+  --color-panel: #ffffff;         /* panneaux — l'accent blanc */
+  --color-panel-sunken: #f8f7f4;  /* ligne survolee / selectionnee */
+  --color-field: #fbfaf7;         /* editeur, champs */
+
+  --color-text: #17181b;          /* 17:1 sur canvas */
+  --color-text-soft: #5f6268;     /* 5.7:1 sur canvas, 6.2:1 sur blanc */
+
+  --color-line: #dcdad3;          /* contours de panneau */
+  --color-line-soft: #ecebe6;     /* separateurs internes */
+  --color-line-strong: #c4c1b8;   /* contours de controles */
+  --color-track: #efeee9;         /* rail de jauge, bascule eteinte */
+  --color-skeleton: #e9e7e1;
+
+  --color-ink: #17181b;           /* boutons principaux, remplissages */
+  --color-ink-hover: #2c2e33;
+  --color-on-ink: #ffffff;
+
+  --color-danger: #b3261e;        /* 5.9:1 sur canvas */
+  --color-danger-wash: #fbf3f1;
+  --color-danger-line: #ecc9c3;
+
+  /* ---------- typographie ---------- */
+  --font-sans: "Geist Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  --text-xs: 0.75rem;      /* 12 — meta, en-tetes de colonnes */
+  --text-sm: 0.8125rem;    /* 13 — texte courant de l'interface */
+  --text-base: 0.875rem;   /* 14 — texte de panneau mis en avant */
+  --text-lg: 1rem;         /* 16 — titres de panneau */
+  --text-xl: 1.25rem;      /* 20 — titres de page */
+
+  --leading-tight: 1.25;
+  --leading: 1.5;
+  --leading-code: 1.7;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  /* ---------- espacements (base 4) ---------- */
+  --space-1: 0.25rem;  /* 4 */
+  --space-2: 0.5rem;   /* 8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.25rem;  /* 20 */
+  --space-6: 1.5rem;   /* 24 */
+  --space-7: 2rem;     /* 32 */
+  --space-8: 3rem;     /* 48 */
+
+  /* ---------- rayons & traits ---------- */
+  --radius-s: 4px;     /* jauges, petits elements */
+  --radius: 6px;       /* boutons, champs, items de nav */
+  --radius-l: 8px;     /* panneaux */
+  --radius-pill: 999px;/* bascules uniquement */
+  --stroke: 1px;
+  --stroke-strong: 2px;
+
+  /* ---------- layout ---------- */
+  --sidebar-width: 216px;
+  --content-max: 1120px;
+  --control-height: 32px;
+  --control-height-s: 28px;
+  --tabbar-height: 56px;
+  --gutter: clamp(var(--space-4), 3vw, var(--space-7));
+
+  /* ---------- mouvement ---------- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration: 140ms;
+  --duration-slow: 420ms;
+
+  /* ---------- focus ---------- */
+  --focus-ring: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration: 0ms;
+    --duration-slow: 0ms;
+  }
+}

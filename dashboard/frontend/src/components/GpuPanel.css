@@ -1,0 +1,25 @@
+.gpu-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 0 var(--space-4) var(--space-4);
+  transition: opacity var(--duration) var(--ease);
+}
+
+/* Donnees perimees : derniere valeur connue, estompee. */
+.gpu-body[data-stale] {
+  opacity: 0.5;
+}
+
+.gpu-resident {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  min-height: var(--control-height-s);
+}
+
+.gpu-model {
+  font-weight: var(--weight-medium);
+}

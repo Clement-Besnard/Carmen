@@ -73,6 +73,16 @@ Si OpenVPN démarre après Docker, le conteneur échoue avec
 `cannot assign requested address` ; `restart: unless-stopped` finit par le
 rattraper, sinon `docker compose up -d dashboard` une fois le VPN monté.
 
+### Sur un poste client (stack sur le serveur, via le VPN)
+
+Un `docker-compose.local.yml` (non versionné) surcharge le service pour viser
+`10.8.0.1` : `OLLAMA_BASE_URL`, les `*_URL` des services et
+`SERVICES_PUBLIC_HOST`. `--no-deps` évite de démarrer un Ollama local :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build --no-deps dashboard
+```
+
 ### Dev
 
 Deux terminaux :
@@ -99,6 +109,8 @@ npm install && npm run dev
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | API Ollama |
 | `STACK_DIR` | racine du repo | Où trouver `modelfiles/` et `prompts/` |
 | `GPU_TOTAL_VRAM_GB` | `24` | Total affiché dans la jauge (non lisible sans accès GPU) |
+| `OPEN_WEBUI_URL`, `LANGFLOW_URL`, `SEARXNG_URL`, `LANGFLOW_BRIDGE_URL` | adresses du réseau Docker | Cibles testées par `/api/services` (à surcharger hors Docker) |
+| `SERVICES_PUBLIC_HOST` | vide (hôte de la page) | Hôte des liens « Ouvrir », quand le dashboard ne tourne pas sur le serveur de la stack |
 
 ## API
 
@@ -111,6 +123,8 @@ npm install && npm run dev
 | `GET` | `/api/custom` | Modèles custom (base, params, prompt) |
 | `PUT` | `/api/custom/{nom}` | Écrit le prompt + régénère le Modelfile |
 | `POST` | `/api/custom/{nom}/rebuild` | Recrée le modèle dans Ollama |
+| `GET` | `/api/services` | Joignabilité et latence d'Open WebUI, Langflow, SearXNG et du bridge |
+| `GET` | `/api/config` | Variables d'environnement affichées dans Paramètres |
 
 ## Sécurité
 

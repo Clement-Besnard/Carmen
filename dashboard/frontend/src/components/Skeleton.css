@@ -1,0 +1,27 @@
+.skeleton {
+  display: inline-block;
+  max-width: 100%;
+  border-radius: var(--radius-s);
+  background: var(--color-skeleton);
+  animation: skeleton-pulse 1.4s var(--ease) infinite alternate;
+}
+
+.skeleton-rows > li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-top: var(--stroke) solid var(--color-line-soft);
+}
+
+@keyframes skeleton-pulse {
+  to {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

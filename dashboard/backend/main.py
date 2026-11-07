@@ -6,8 +6,10 @@ Expose une petite API au-dessus de l'API Ollama :
   - editer le prompt systeme d'un modele custom et le rebuild
 """
 
+import asyncio
 import os
 import re
+import time
 from pathlib import Path
 
 import httpx
@@ -277,6 +279,89 @@ async def rebuild_custom(name: str) -> dict:
         )
 
     return {"model": name, "rebuilt": True, "reloaded": was_loaded}
+
+
+# --------------------------------------------------------------------------
+# Services de la stack et configuration (lecture seule)
+# --------------------------------------------------------------------------
+
+# `url` est l'adresse vue depuis le conteneur du dashboard (reseau Docker) ;
+# `port` est le port publie sur l'hote, utilise par le front pour le lien.
+# Les URL sont surchargeables pour lancer le backend hors Docker.
+SERVICES = [
+    {
+        "id": "open-webui",
+        "name": "Open WebUI",
+        "description": "Interface de chat",
+        "port": 3000,
+        "has_ui": True,
+        "url": os.environ.get("OPEN_WEBUI_URL", "http://open-webui:8080"),
+    },
+    {
+        "id": "langflow",
+        "name": "Langflow",
+        "description": "Construction d'agents",
+        "port": 7860,
+        "has_ui": True,
+        "url": os.environ.get("LANGFLOW_URL", "http://langflow:7860"),
+    },
+    {
+        "id": "searxng",
+        "name": "SearXNG",
+        "description": "Recherche web des modèles",
+        "port": 8081,
+        "has_ui": True,
+        "url": os.environ.get("SEARXNG_URL", "http://searxng:8080"),
+    },
+    {
+        "id": "langflow-bridge",
+        "name": "Bridge Langflow",
+        "description": "Flows Langflow exposés comme modèles",
+        "port": 7861,
+        "has_ui": False,
+        "url": os.environ.get("LANGFLOW_BRIDGE_URL", "http://langflow-bridge:7861"),
+    },
+]
+
+SERVICE_TIMEOUT = httpx.Timeout(3.0, connect=2.0)
+
+# Hote des liens "Ouvrir". Vide : le front reprend l'hote de la page, ce qui
+# marche quand le dashboard tourne sur le meme serveur que la stack. A fixer
+# (ex. 10.8.0.1) quand le dashboard tourne ailleurs, sur un poste client.
+SERVICES_PUBLIC_HOST = os.environ.get("SERVICES_PUBLIC_HOST", "").strip()
+
+
+async def probe(client: httpx.AsyncClient, service: dict) -> dict:
+    """Un service "repond" s'il renvoie une reponse HTTP, quel que soit le code :
+    on teste la joignabilite, pas une route precise."""
+    public = {k: v for k, v in service.items() if k != "url"}
+    public["href"] = (
+        f"http://{SERVICES_PUBLIC_HOST}:{service['port']}" if SERVICES_PUBLIC_HOST else None
+    )
+    started = time.perf_counter()
+    try:
+        response = await client.get(service["url"])
+    except httpx.RequestError as exc:
+        return {**public, "up": False, "latency_ms": None, "error": type(exc).__name__}
+    latency = round((time.perf_counter() - started) * 1000)
+    return {**public, "up": True, "latency_ms": latency, "status_code": response.status_code}
+
+
+@app.get("/api/services")
+async def list_services() -> dict:
+    async with httpx.AsyncClient(timeout=SERVICE_TIMEOUT, follow_redirects=False) as client:
+        results = await asyncio.gather(*(probe(client, s) for s in SERVICES))
+    return {"services": list(results)}
+
+
+@app.get("/api/config")
+async def config() -> dict:
+    return {
+        "ollama_base_url": OLLAMA_BASE_URL,
+        "stack_dir": str(STACK_DIR),
+        "gpu_total_vram_gb": VRAM_TOTAL_BYTES / 1024**3,
+        "services_public_host": SERVICES_PUBLIC_HOST or None,
+    }
 
 
 # --------------------------------------------------------------------------

@@ -346,7 +346,7 @@ async def rebuild_custom(name: str) -> dict:
 # Services declares et configuration (lecture seule)
 # --------------------------------------------------------------------------
 
-# Nimbus ne suppose aucun service : il ne surveille que ceux declares dans ce
+# Carmen ne suppose aucun service : il ne surveille que ceux declares dans ce
 # fichier, propre a chaque installation. Absent ou vide : aucun service.
 SERVICES_FILE = Path(os.environ.get("SERVICES_FILE") or STACK_DIR / "config" / "services.json")
 

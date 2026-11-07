@@ -79,7 +79,7 @@ export default function Shell({ children }) {
 
       <aside className="sidebar">
         <Link to="/" className="brand">
-          Nimbus
+          Carmen
         </Link>
         <nav aria-label="Navigation principale">
           <NavList variant="sidebar" />
@@ -89,7 +89,7 @@ export default function Shell({ children }) {
 
       <header className="topbar">
         <Link to="/" className="brand">
-          Nimbus
+          Carmen
         </Link>
         <Connection compact />
       </header>

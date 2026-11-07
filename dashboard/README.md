@@ -1,4 +1,4 @@
-# Nimbus — dashboard llm-stack
+# Carmen — dashboard llm-stack
 
 Interface web pour piloter Ollama : charger / décharger les modèles en VRAM,
 rebuild les modèles custom depuis leur prompt système, et — si on en déclare —
@@ -91,7 +91,7 @@ npm install && npm run dev
 
 ## Services surveillés
 
-Nimbus ne suppose aucune application à côté d'Ollama. Il ne surveille que celles
+Carmen ne suppose aucune application à côté d'Ollama. Elle ne surveille que celles
 déclarées dans `config/services.json` (non versionné, propre à chaque
 installation). Sans ce fichier, ou s'il est vide, la section Services et le
 panneau de l'accueil n'apparaissent pas.

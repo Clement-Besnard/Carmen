@@ -1,36 +1,40 @@
 /*
- * Design tokens Nimbus — source unique pour couleurs, typo, espacements,
+ * Design tokens Carmen — source unique pour couleurs, typo, espacements,
  * rayons et mouvements. Aucun composant ne contient de valeur en dur.
  *
- * Direction "console" : fond papier legerement grise, panneaux blancs a filet
- * fin. Le blanc est l'accent : il marque ce qui est actif (page courante,
- * panneaux), le noir porte l'action principale (un bouton par ecran).
+ * Direction "console" : fond et barre laterale teintes, panneaux blancs a
+ * filet fin. Une seule couleur forte (framboise) porte l'action principale,
+ * l'element actif, la jauge et les bascules allumees.
  */
 
 :root {
-  /* ---------- couleurs ---------- */
-  --color-canvas: #f4f3ef;        /* fond de page */
-  --color-sidebar: #ebeae5;       /* barre laterale, barre mobile */
-  --color-panel: #ffffff;         /* panneaux — l'accent blanc */
-  --color-panel-sunken: #f8f7f4;  /* ligne survolee / selectionnee */
-  --color-field: #fbfaf7;         /* editeur, champs */
+  /* ---------- couleurs ----------
+   * Palette framboise : accent hsl(340 67% 48%), fond et barre laterale
+   * teintes de la meme couleur. Contrastes verifies (WCAG AA). */
+  --color-canvas: #f8f4f5;        /* fond de page */
+  --color-sidebar: #f0e3e7;       /* barre laterale, barre mobile */
+  --color-panel: #ffffff;         /* panneaux */
+  --color-panel-sunken: #fbf6f8;  /* ligne survolee / selectionnee */
+  --color-field: #fcf9fa;         /* editeur, champs */
 
-  --color-text: #17181b;          /* 17:1 sur canvas */
-  --color-text-soft: #5f6268;     /* 5.7:1 sur canvas, 6.2:1 sur blanc */
+  --color-text: #1c1619;          /* quasi noir, a peine rose */
+  --color-text-soft: #6e535c;     /* 6.3:1 sur canvas, 6.9:1 sur blanc, 5.5:1 sur sidebar */
 
-  --color-line: #dcdad3;          /* contours de panneau */
-  --color-line-soft: #ecebe6;     /* separateurs internes */
-  --color-line-strong: #c4c1b8;   /* contours de controles */
-  --color-track: #efeee9;         /* rail de jauge, bascule eteinte */
-  --color-skeleton: #e9e7e1;
+  --color-line: #e8d6dc;          /* contours de panneau */
+  --color-line-soft: #f4ecee;     /* separateurs internes */
+  --color-line-strong: #d4b8c2;   /* contours de controles */
+  --color-track: #f4e6eb;         /* rail de jauge */
+  --color-toggle-off: #a8848f;    /* bascule eteinte — 3.3:1 avec le pouce blanc */
+  --color-skeleton: #f0e3e7;
 
-  --color-ink: #17181b;           /* boutons principaux, remplissages */
-  --color-ink-hover: #2c2e33;
-  --color-on-ink: #ffffff;
+  --color-accent: #cc285f;        /* framboise : action principale, jauge, bascules — 5.2:1 avec blanc */
+  --color-accent-hover: #a6214d;
+  --color-accent-strong: #a6214d; /* texte et filets d'accent sur fond clair — 6.5:1 sur canvas */
+  --color-on-accent: #ffffff;
 
-  --color-danger: #b3261e;        /* 5.9:1 sur canvas */
-  --color-danger-wash: #fbf3f1;
-  --color-danger-line: #ecc9c3;
+  --color-danger: #b93815;        /* erreurs : rouge tire vers l'orange pour ne pas se confondre avec l'accent — 5.3:1 */
+  --color-danger-wash: #fcf1ec;
+  --color-danger-line: #f0cbbd;
 
   /* ---------- typographie ---------- */
   --font-sans: "Geist Sans", "Helvetica Neue", Arial, sans-serif;
@@ -82,7 +86,7 @@
   --duration-slow: 420ms;
 
   /* ---------- focus ---------- */
-  --focus-ring: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-ink);
+  --focus-ring: 0 0 0 2px var(--color-canvas), 0 0 0 4px var(--color-accent-strong);
 }
 
 @media (prefers-reduced-motion: reduce) {

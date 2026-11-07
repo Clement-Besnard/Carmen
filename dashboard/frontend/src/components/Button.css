@@ -30,14 +30,14 @@
 }
 
 .button--primary {
-  border-color: var(--color-ink);
-  background: var(--color-ink);
-  color: var(--color-on-ink);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
 }
 
 .button--primary:hover:not(:disabled) {
-  border-color: var(--color-ink-hover);
-  background: var(--color-ink-hover);
+  border-color: var(--color-accent-hover);
+  background: var(--color-accent-hover);
 }
 
 .button--ghost {

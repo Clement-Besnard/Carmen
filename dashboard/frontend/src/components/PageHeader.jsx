@@ -7,7 +7,7 @@ import "./PageHeader.css";
  */
 export default function PageHeader({ title, meta, actions, crumb, mono = false }) {
   useEffect(() => {
-    document.title = `${title} — Nimbus`;
+    document.title = `${title} — Carmen`;
   }, [title]);
 
   return (

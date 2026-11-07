@@ -1,7 +1,7 @@
 # llm-stack
 
 The base layer of my homelab LLM setup: [Ollama](https://ollama.com) serving open-weight
-models on a single Ubuntu box with an RTX 3090, and **Nimbus**, the web dashboard that
+models on a single Ubuntu box with an RTX 3090, and **Carmen**, the web dashboard that
 administers it.
 
 This repo deliberately stops there. Anything that *uses* the models — a chat UI, agents,
@@ -16,8 +16,8 @@ Docker network. The rule is one-way: other projects depend on this one, never th
 | `prompts/` | System prompts in Markdown — the editable source of truth for each custom model |
 | `modelfiles/` | Generated Ollama Modelfiles (base model, parameters, system prompt) |
 | `builds/` | Shell scripts that render a Modelfile from its prompt and run `ollama create` |
-| `dashboard/` | Nimbus: a FastAPI + React admin panel over the Ollama API |
-| `config/` | Optional `services.json`: the apps Nimbus should monitor (none by default) |
+| `dashboard/` | Carmen: a FastAPI + React admin panel over the Ollama API |
+| `config/` | Optional `services.json`: the apps Carmen should monitor (none by default) |
 
 ### Custom models
 
@@ -33,7 +33,7 @@ A prompt lives in `prompts/<name>.md`, the build script wraps it into
 and re-running the script — or saving and rebuilding from the dashboard — is the whole
 iteration loop.
 
-### Dashboard (Nimbus)
+### Dashboard (Carmen)
 
 `dashboard/` covers what the Ollama CLI makes tedious:
 
@@ -44,7 +44,7 @@ iteration loop.
 - edit a custom model's system prompt in the browser, write it back to `prompts/` and
   `modelfiles/`, then rebuild the model in place — reloading it if it was in VRAM.
 
-Nimbus doesn't assume anything runs next to Ollama. To monitor an app that uses it, declare
+Carmen doesn't assume anything runs next to Ollama. To monitor an app that uses it, declare
 it in `config/services.json` (see `config/services.example.json`); without that file, the
 dashboard shows no services section at all.
 
@@ -67,7 +67,7 @@ docker compose exec ollama ollama pull qwen3:8b
 ./builds/build-voice-assist-model.sh
 ```
 
-The Ollama API is then on port `11434` and Nimbus on <http://127.0.0.1:8080> (and
+The Ollama API is then on port `11434` and Carmen on <http://127.0.0.1:8080> (and
 <http://10.8.0.1:8080> over the VPN).
 
 ## Connecting another project
@@ -93,7 +93,7 @@ The network exists once this stack has been started, so start it first.
 
 ## Notes
 
-- **Exposure.** Nimbus has no authentication: it only listens on the loopback and the VPN
+- **Exposure.** Carmen has no authentication: it only listens on the loopback and the VPN
   address (`10.8.0.1`), never on the LAN. Ollama's API has no auth either, and is
   currently published on every interface (`11434:11434`). Now that consumers reach it
   over `llm-net`, that port could be narrowed to `127.0.0.1` and the VPN address.

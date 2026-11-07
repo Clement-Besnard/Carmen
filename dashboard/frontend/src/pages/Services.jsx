@@ -38,7 +38,7 @@ function NoServices({ file, error }) {
             </>
           ) : (
             <>
-              <strong>Nimbus ne surveille aucun service</strong>
+              <strong>Carmen ne surveille aucun service</strong>
               Pour suivre une application qui utilise Ollama, la déclarer dans{" "}
               <code>{file ?? "config/services.json"}</code>. Sans ce fichier, cette section
               reste masquée.

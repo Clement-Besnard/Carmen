@@ -1,7 +1,8 @@
-# Dashboard llm-stack
+# Nimbus — dashboard llm-stack
 
-Interface web pour piloter Ollama : charger / décharger les modèles en VRAM et
-rebuild les modèles custom depuis leur prompt système.
+Interface web pour piloter Ollama : charger / décharger les modèles en VRAM,
+rebuild les modèles custom depuis leur prompt système, et — si on en déclare —
+surveiller les applications qui utilisent Ollama.
 
 ```
 dashboard/
@@ -33,31 +34,9 @@ source de vérité pour la base et les paramètres ; le `.md` l'est pour le prom
 
 ## Lancer
 
-### Docker (avec le reste de la stack)
+### Docker
 
-Ajouter ce service à `docker-compose.yml` :
-
-```yaml
-  dashboard:
-    build: ./dashboard
-    container_name: llm-dashboard
-    restart: unless-stopped
-    depends_on:
-      - ollama
-    volumes:
-      # Le dashboard réécrit les prompts et régénère les Modelfiles.
-      - ./modelfiles:/stack/modelfiles
-      - ./prompts:/stack/prompts
-    ports:
-      # Pas d'authentification : accessible depuis la loopback et le VPN
-      # uniquement, jamais depuis le LAN (192.168.1.0/24).
-      - "127.0.0.1:8080:8080"
-      - "10.8.0.1:8080:8080"
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - STACK_DIR=/stack
-      - GPU_TOTAL_VRAM_GB=24
-```
+Le service `dashboard` fait partie du `docker-compose.yml` du socle :
 
 ```bash
 docker compose up -d --build dashboard
@@ -75,9 +54,8 @@ rattraper, sinon `docker compose up -d dashboard` une fois le VPN monté.
 
 ### Sur un poste client (stack sur le serveur, via le VPN)
 
-Un `docker-compose.local.yml` (non versionné) surcharge le service pour viser
-`10.8.0.1` : `OLLAMA_BASE_URL`, les `*_URL` des services et
-`SERVICES_PUBLIC_HOST`. `--no-deps` évite de démarrer un Ollama local :
+Un `docker-compose.local.yml` (non versionné) surcharge `OLLAMA_BASE_URL` pour
+viser `http://10.8.0.1:11434`. `--no-deps` évite de démarrer un Ollama local :
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build --no-deps dashboard
@@ -109,8 +87,29 @@ npm install && npm run dev
 | `OLLAMA_BASE_URL` | `http://127.0.0.1:11434` | API Ollama |
 | `STACK_DIR` | racine du repo | Où trouver `modelfiles/` et `prompts/` |
 | `GPU_TOTAL_VRAM_GB` | `24` | Total affiché dans la jauge (non lisible sans accès GPU) |
-| `OPEN_WEBUI_URL`, `LANGFLOW_URL`, `SEARXNG_URL`, `LANGFLOW_BRIDGE_URL` | adresses du réseau Docker | Cibles testées par `/api/services` (à surcharger hors Docker) |
-| `SERVICES_PUBLIC_HOST` | vide (hôte de la page) | Hôte des liens « Ouvrir », quand le dashboard ne tourne pas sur le serveur de la stack |
+| `SERVICES_FILE` | `$STACK_DIR/config/services.json` | Services à surveiller (facultatif, voir ci-dessous) |
+
+## Services surveillés
+
+Nimbus ne suppose aucune application à côté d'Ollama. Il ne surveille que celles
+déclarées dans `config/services.json` (non versionné, propre à chaque
+installation). Sans ce fichier, ou s'il est vide, la section Services et le
+panneau de l'accueil n'apparaissent pas.
+
+```bash
+cp config/services.example.json config/services.json
+```
+
+| Champ | Requis | Rôle |
+|---|---|---|
+| `name` | oui | Nom affiché |
+| `url` | oui | Adresse testée par le backend, vue depuis le conteneur (ex. `http://open-webui:8080` sur `llm-net`) |
+| `description` | non | Ligne affichée sous le nom |
+| `link` | non | Adresse ouverte par le navigateur. Sans elle, pas de lien « Ouvrir » |
+| `container` | non | Nom du conteneur, pour proposer `docker logs <container>` en cas de panne |
+
+Le fichier est relu à chaque requête : pas besoin de redémarrer le dashboard
+après l'avoir modifié, seulement de recharger la page.
 
 ## API
 
@@ -123,8 +122,8 @@ npm install && npm run dev
 | `GET` | `/api/custom` | Modèles custom (base, params, prompt) |
 | `PUT` | `/api/custom/{nom}` | Écrit le prompt + régénère le Modelfile |
 | `POST` | `/api/custom/{nom}/rebuild` | Recrée le modèle dans Ollama |
-| `GET` | `/api/services` | Joignabilité et latence d'Open WebUI, Langflow, SearXNG et du bridge |
-| `GET` | `/api/config` | Variables d'environnement affichées dans Paramètres |
+| `GET` | `/api/services` | Joignabilité et latence des services déclarés |
+| `GET` | `/api/config` | Configuration en lecture seule, dont la liste des services déclarés |
 
 ## Sécurité
 

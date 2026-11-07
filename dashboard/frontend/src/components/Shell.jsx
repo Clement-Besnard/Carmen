@@ -5,11 +5,12 @@ import StatusBanner from "./StatusBanner.jsx";
 import StatusDot from "./StatusDot.jsx";
 import "./Shell.css";
 
+// `needsServices` : entree affichee seulement si des services sont declares.
 export const NAV_ITEMS = [
   { to: "/", label: "Vue d'ensemble", short: "Accueil" },
   { to: "/modeles", label: "Modèles", short: "Modèles" },
   { to: "/custom", label: "Modèles custom", short: "Custom" },
-  { to: "/services", label: "Services", short: "Services" },
+  { to: "/services", label: "Services", short: "Services", needsServices: true },
   { to: "/parametres", label: "Paramètres", short: "Réglages" },
 ];
 
@@ -40,9 +41,11 @@ function Connection({ compact = false }) {
 
 function NavList({ variant }) {
   const { path } = useRouter();
+  const { hasServices } = useStack();
+  const items = NAV_ITEMS.filter((item) => !item.needsServices || hasServices);
   return (
     <ul className={`nav nav--${variant}`}>
-      {NAV_ITEMS.map((item) => (
+      {items.map((item) => (
         <li key={item.to}>
           <Link
             to={item.to}

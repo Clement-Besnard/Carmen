@@ -40,6 +40,8 @@ services:
       # Le dashboard réécrit les prompts et régénère les Modelfiles.
       - ./modelfiles:/stack/modelfiles
       - ./prompts:/stack/prompts
+      # Services a surveiller (config/services.json, facultatif).
+      - ./config:/stack/config:ro
     ports:
       # Pas d'authentification : accessible depuis la loopback et le VPN
       # uniquement, jamais depuis le LAN (192.168.1.0/24).

@@ -25,6 +25,16 @@ const SETTINGS = [
     field: "gpu_total_vram_gb",
     help: "Total affiché dans la jauge VRAM, le conteneur ne peut pas le lire sur le GPU.",
   },
+  {
+    key: "SERVICES_FILE",
+    field: "services_file",
+    help: (config) =>
+      config.services_error
+        ? `Illisible : ${config.services_error}`
+        : config.services.length
+          ? `${config.services.length} service${config.services.length > 1 ? "s" : ""} déclaré${config.services.length > 1 ? "s" : ""} : ${config.services.map((s) => s.name).join(", ")}.`
+          : "Aucun service déclaré : la section Services est masquée.",
+  },
 ];
 
 /**
@@ -98,7 +108,9 @@ export default function Settings() {
                     <dt className="mono setting-key">{setting.key}</dt>
                     <dd className="setting-value">
                       <span className="mono">{value}</span>
-                      <span className="soft">{setting.help}</span>
+                      <span className="soft">
+                        {typeof setting.help === "function" ? setting.help(data) : setting.help}
+                      </span>
                     </dd>
                     <dd className="setting-action">
                       <CopyButton value={value} label={setting.key} />

@@ -7,6 +7,7 @@ Expose une petite API au-dessus de l'API Ollama :
 """
 
 import asyncio
+import json
 import os
 import re
 import time
@@ -282,85 +283,91 @@ async def rebuild_custom(name: str) -> dict:
 
 
 # --------------------------------------------------------------------------
-# Services de la stack et configuration (lecture seule)
+# Services declares et configuration (lecture seule)
 # --------------------------------------------------------------------------
 
-# `url` est l'adresse vue depuis le conteneur du dashboard (reseau Docker) ;
-# `port` est le port publie sur l'hote, utilise par le front pour le lien.
-# Les URL sont surchargeables pour lancer le backend hors Docker.
-SERVICES = [
-    {
-        "id": "open-webui",
-        "name": "Open WebUI",
-        "description": "Interface de chat",
-        "port": 3000,
-        "has_ui": True,
-        "url": os.environ.get("OPEN_WEBUI_URL", "http://open-webui:8080"),
-    },
-    {
-        "id": "langflow",
-        "name": "Langflow",
-        "description": "Construction d'agents",
-        "port": 7860,
-        "has_ui": True,
-        "url": os.environ.get("LANGFLOW_URL", "http://langflow:7860"),
-    },
-    {
-        "id": "searxng",
-        "name": "SearXNG",
-        "description": "Recherche web des modèles",
-        "port": 8081,
-        "has_ui": True,
-        "url": os.environ.get("SEARXNG_URL", "http://searxng:8080"),
-    },
-    {
-        "id": "langflow-bridge",
-        "name": "Bridge Langflow",
-        "description": "Flows Langflow exposés comme modèles",
-        "port": 7861,
-        "has_ui": False,
-        "url": os.environ.get("LANGFLOW_BRIDGE_URL", "http://langflow-bridge:7861"),
-    },
-]
+# Nimbus ne suppose aucun service : il ne surveille que ceux declares dans ce
+# fichier, propre a chaque installation. Absent ou vide : aucun service.
+SERVICES_FILE = Path(os.environ.get("SERVICES_FILE") or STACK_DIR / "config" / "services.json")
 
 SERVICE_TIMEOUT = httpx.Timeout(3.0, connect=2.0)
 
-# Hote des liens "Ouvrir". Vide : le front reprend l'hote de la page, ce qui
-# marche quand le dashboard tourne sur le meme serveur que la stack. A fixer
-# (ex. 10.8.0.1) quand le dashboard tourne ailleurs, sur un poste client.
-SERVICES_PUBLIC_HOST = os.environ.get("SERVICES_PUBLIC_HOST", "").strip()
+
+def slugify(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "service"
+
+
+def read_services() -> list[dict]:
+    """Lit et valide SERVICES_FILE. Une erreur de format remonte telle quelle
+    au front, avec le chemin du fichier, plutot que d'etre ignoree."""
+    if not SERVICES_FILE.is_file():
+        return []
+    try:
+        raw = json.loads(SERVICES_FILE.read_text(encoding="utf-8") or "[]")
+    except json.JSONDecodeError as exc:
+        raise HTTPException(500, f"{SERVICES_FILE} n'est pas du JSON valide : {exc}")
+    if not isinstance(raw, list):
+        raise HTTPException(500, f"{SERVICES_FILE} doit contenir une liste de services")
+
+    services, seen = [], set()
+    for index, entry in enumerate(raw, 1):
+        if not isinstance(entry, dict) or not entry.get("name") or not entry.get("url"):
+            raise HTTPException(
+                500, f"{SERVICES_FILE}, service n°{index} : « name » et « url » sont requis"
+            )
+        slug = slugify(entry["name"])
+        while slug in seen:
+            slug += "-2"
+        seen.add(slug)
+        services.append({
+            "id": slug,
+            "name": str(entry["name"]),
+            "description": entry.get("description") or None,
+            # url : adresse testee par le backend (ex. reseau Docker).
+            "url": str(entry["url"]),
+            # link : adresse ouverte par le navigateur. Absente : pas de lien.
+            "link": entry.get("link") or None,
+            # container : nom du conteneur, pour la commande de diagnostic.
+            "container": entry.get("container") or None,
+        })
+    return services
 
 
 async def probe(client: httpx.AsyncClient, service: dict) -> dict:
     """Un service "repond" s'il renvoie une reponse HTTP, quel que soit le code :
     on teste la joignabilite, pas une route precise."""
-    public = {k: v for k, v in service.items() if k != "url"}
-    public["href"] = (
-        f"http://{SERVICES_PUBLIC_HOST}:{service['port']}" if SERVICES_PUBLIC_HOST else None
-    )
     started = time.perf_counter()
     try:
         response = await client.get(service["url"])
     except httpx.RequestError as exc:
-        return {**public, "up": False, "latency_ms": None, "error": type(exc).__name__}
+        return {**service, "up": False, "latency_ms": None, "error": type(exc).__name__}
     latency = round((time.perf_counter() - started) * 1000)
-    return {**public, "up": True, "latency_ms": latency, "status_code": response.status_code}
+    return {**service, "up": True, "latency_ms": latency, "status_code": response.status_code}
 
 
 @app.get("/api/services")
 async def list_services() -> dict:
+    services = read_services()
     async with httpx.AsyncClient(timeout=SERVICE_TIMEOUT, follow_redirects=False) as client:
-        results = await asyncio.gather(*(probe(client, s) for s in SERVICES))
+        results = await asyncio.gather(*(probe(client, s) for s in services))
     return {"services": list(results)}
 
 
 @app.get("/api/config")
 async def config() -> dict:
+    """Configuration en lecture seule. Ne depend pas d'Ollama : le front s'en
+    sert au demarrage pour savoir quelles sections afficher."""
+    try:
+        services, services_error = read_services(), None
+    except HTTPException as exc:
+        services, services_error = [], exc.detail
     return {
         "ollama_base_url": OLLAMA_BASE_URL,
         "stack_dir": str(STACK_DIR),
         "gpu_total_vram_gb": VRAM_TOTAL_BYTES / 1024**3,
-        "services_public_host": SERVICES_PUBLIC_HOST or None,
+        "services_file": str(SERVICES_FILE),
+        "services": [{"id": s["id"], "name": s["name"], "link": s["link"]} for s in services],
+        "services_error": services_error,
     }
 
 

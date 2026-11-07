@@ -17,6 +17,7 @@ Docker network. The rule is one-way: other projects depend on this one, never th
 | `modelfiles/` | Generated Ollama Modelfiles (base model, parameters, system prompt) |
 | `builds/` | Shell scripts that render a Modelfile from its prompt and run `ollama create` |
 | `dashboard/` | Nimbus: a FastAPI + React admin panel over the Ollama API |
+| `config/` | Optional `services.json`: the apps Nimbus should monitor (none by default) |
 
 ### Custom models
 
@@ -42,6 +43,10 @@ iteration loop.
   (`keep_alive: 0`);
 - edit a custom model's system prompt in the browser, write it back to `prompts/` and
   `modelfiles/`, then rebuild the model in place — reloading it if it was in VRAM.
+
+Nimbus doesn't assume anything runs next to Ollama. To monitor an app that uses it, declare
+it in `config/services.json` (see `config/services.example.json`); without that file, the
+dashboard shows no services section at all.
 
 The Vite build lands in `dashboard/backend/static/` (generated, not versioned), so in
 production FastAPI serves the API and the front-end from one process. Details, API and

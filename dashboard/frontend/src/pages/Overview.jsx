@@ -1,9 +1,8 @@
-import Button from "../components/Button.jsx";
 import GpuPanel from "../components/GpuPanel.jsx";
 import ModelTable from "../components/ModelTable.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Panel from "../components/Panel.jsx";
-import ServiceList, { serviceHref } from "../components/ServiceList.jsx";
+import ServiceList from "../components/ServiceList.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
 import { api } from "../lib/api.js";
 import { clockTime, gigabytesRound } from "../lib/format.js";
@@ -43,7 +42,9 @@ function ModelsPanel() {
   );
 }
 
-function ServicesPanel({ services }) {
+/** Monte seulement si des services sont declares : pas de requete sinon. */
+function ServicesPanel() {
+  const services = usePolling(api.services, SERVICES_POLL_MS);
   const list = services.data?.services ?? [];
   const upCount = list.filter((s) => s.up).length;
   return (
@@ -57,7 +58,7 @@ function ServicesPanel({ services }) {
         </Link>
       }
     >
-      {services.phase === "loading" && <SkeletonRows count={4} label="Vérification des services" />}
+      {services.phase === "loading" && <SkeletonRows count={2} label="Vérification des services" />}
       {services.phase === "unavailable" && (
         <p className="panel-empty">Impossible de vérifier les services.</p>
       )}
@@ -67,12 +68,7 @@ function ServicesPanel({ services }) {
 }
 
 export default function Overview() {
-  const { status, lastSuccess } = useStack();
-  const services = usePolling(api.services, SERVICES_POLL_MS);
-  const webui = services.data?.services.find((s) => s.id === "open-webui") ?? {
-    port: 3000,
-    href: null,
-  };
+  const { status, lastSuccess, hasServices } = useStack();
   const meta = [
     status?.version && `Ollama ${status.version}`,
     lastSuccess && `actualisé à ${clockTime(lastSuccess)}`,
@@ -85,18 +81,17 @@ export default function Overview() {
       <PageHeader
         title="Vue d'ensemble"
         meta={meta || "Connexion à Ollama…"}
-        actions={
-          <Button variant="primary" href={serviceHref(webui)}>
-            Ouvrir Open WebUI
-          </Button>
-        }
       />
       <div className="stack">
         <GpuPanel />
-        <div className="split">
+        {hasServices ? (
+          <div className="split">
+            <ModelsPanel />
+            <ServicesPanel />
+          </div>
+        ) : (
           <ModelsPanel />
-          <ServicesPanel services={services} />
-        </div>
+        )}
       </div>
     </>
   );

@@ -9,3 +9,5 @@ prompt/*.md
 __pycache__/
 # Build Vite, regenere par le Dockerfile
 dashboard/backend/static/
+# Services surveilles par Nimbus : propre a chaque installation
+config/services.json

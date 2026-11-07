@@ -42,3 +42,15 @@
 .search-field:hover {
   border-color: var(--color-text-soft);
 }
+
+.code-sample {
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  overflow-x: auto;
+  border: var(--stroke) solid var(--color-line-soft);
+  border-radius: var(--radius);
+  background: var(--color-field);
+  color: var(--color-text);
+  font-size: var(--text-xs);
+  line-height: var(--leading-code);
+}

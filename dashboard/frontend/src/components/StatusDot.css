@@ -1,0 +1,20 @@
+.status-dot {
+  flex: none;
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+
+.status-dot[data-state="up"] {
+  background: currentColor;
+}
+
+.status-dot[data-state="pending"] {
+  background: linear-gradient(90deg, currentColor 50%, transparent 50%);
+}
+
+.status-dot[data-state="down"] {
+  color: var(--color-danger);
+}

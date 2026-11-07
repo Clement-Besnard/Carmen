@@ -1,0 +1,40 @@
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-5);
+  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border: var(--stroke) solid var(--color-danger-line);
+  border-radius: var(--radius-l);
+  background: var(--color-danger-wash);
+}
+
+.banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  max-width: 72ch;
+}
+
+.banner-title {
+  color: var(--color-danger);
+  font-weight: var(--weight-medium);
+}
+
+.banner-detail {
+  overflow-wrap: anywhere;
+}
+
+.banner-meta {
+  color: var(--color-text-soft);
+  font-size: var(--text-xs);
+}
+
+.notice {
+  padding: 2px 0 2px var(--space-3);
+  border-left: var(--stroke-strong) solid var(--color-ink);
+  color: var(--color-text-soft);
+}

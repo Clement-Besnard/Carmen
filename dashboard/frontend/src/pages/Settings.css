@@ -1,0 +1,34 @@
+.setting {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) auto;
+  gap: var(--space-4);
+  align-items: baseline;
+  padding: var(--space-3) var(--space-4);
+}
+
+.setting + .setting {
+  border-top: var(--stroke) solid var(--color-line-soft);
+}
+
+.setting-key {
+  font-weight: var(--weight-medium);
+}
+
+.setting-value {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 639px) {
+  .setting {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--space-1);
+  }
+
+  .setting-value {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

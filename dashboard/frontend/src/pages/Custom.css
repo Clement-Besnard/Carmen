@@ -1,0 +1,134 @@
+.custom-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+@media (max-width: 899px) {
+  .custom-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- liste des modeles custom ---------- */
+
+.custom-nav-link {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--space-4);
+  border-top: var(--stroke) solid var(--color-line-soft);
+  text-decoration: none;
+}
+
+.custom-nav-link .soft {
+  font-size: var(--text-xs);
+}
+
+.custom-nav-link:hover {
+  background: var(--color-panel-sunken);
+}
+
+.custom-nav-link[aria-current="page"] {
+  background: var(--color-canvas);
+  box-shadow: inset var(--stroke-strong) 0 0 var(--color-ink);
+  font-weight: var(--weight-medium);
+}
+
+/* ---------- faits du Modelfile ---------- */
+
+.facts {
+  padding: 0 var(--space-4);
+}
+
+.facts > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-1) 0;
+}
+
+.facts dt {
+  color: var(--color-text-soft);
+}
+
+.facts dd {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.facts-path {
+  padding: var(--space-2) var(--space-4) var(--space-3);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+/* ---------- editeur ---------- */
+
+.editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-field {
+  display: block;
+  width: 100%;
+  min-height: 420px;
+  padding: var(--space-4);
+  border: 0;
+  border-top: var(--stroke) solid var(--color-line-soft);
+  border-bottom: var(--stroke) solid var(--color-line-soft);
+  background: var(--color-field);
+  font-size: var(--text-sm);
+  line-height: var(--leading-code);
+  resize: vertical;
+}
+
+.editor-field:focus-visible {
+  box-shadow: inset 0 0 0 var(--stroke-strong) var(--color-ink);
+}
+
+.editor-field:disabled {
+  color: var(--color-text-soft);
+}
+
+.editor-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.editor-state[data-dirty] {
+  color: var(--color-text);
+  font-weight: var(--weight-medium);
+}
+
+.editor-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.editor-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 300px;
+  padding: var(--space-4);
+}
+
+@media (max-width: 639px) {
+  .editor-field {
+    min-height: 300px;
+  }
+
+  .editor-actions {
+    width: 100%;
+  }
+
+  .editor-actions .button {
+    flex: 1;
+  }
+}

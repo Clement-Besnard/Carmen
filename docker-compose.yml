@@ -1,3 +1,9 @@
+# Le socle : Ollama et son dashboard d'administration (Nimbus).
+#
+# Les applications qui consomment les modeles (chat, agents, voix...) vivent
+# dans leurs propres projets et rejoignent le reseau `llm-net` pour atteindre
+# Ollama par son nom : http://ollama:11434. Le socle ne les connait pas.
+
 services:
   ollama:
     image: ollama/ollama:0.34.0
@@ -24,30 +30,6 @@ services:
               count: all
               capabilities: [gpu]
 
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main
-    container_name: open-webui
-    restart: unless-stopped
-    depends_on:
-      - ollama
-      - langflow-bridge
-      - searxng
-    volumes:
-      - webui_data:/app/backend/data
-    ports:
-      - "3000:8080"
-    environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - WEBUI_AUTH=true
-      # Les flows Langflow arrivent comme des modèles via la passerelle.
-      - ENABLE_OPENAI_API=true
-      - OPENAI_API_BASE_URLS=http://langflow-bridge:7861/v1
-      - OPENAI_API_KEYS=langflow
-      # Recherche web via SearXNG (installation neuve ; sinon config en base).
-      - ENABLE_WEB_SEARCH=true
-      - WEB_SEARCH_ENGINE=searxng
-      - SEARXNG_QUERY_URL=http://searxng:8080/search?q=<query>
-
   dashboard:
     build: ./dashboard
     container_name: llm-dashboard
@@ -68,74 +50,11 @@ services:
       - STACK_DIR=/stack
       - GPU_TOTAL_VRAM_GB=24
 
-  langflow:
-    image: langflowai/langflow:1.11.0   # pas "langflow/langflow", ce repo n'existe pas
-    container_name: langflow
-    restart: unless-stopped
-    depends_on:
-      - ollama
-    volumes:
-      - langflow_data:/app/langflow
-    ports:
-      - "127.0.0.1:7860:7860"
-      - "10.8.0.1:7860:7860"
-    environment:
-      - LANGFLOW_CONFIG_DIR=/app/langflow
-      # Pas d'écran de login ni de clé d'API : Langflow n'écoute que sur la
-      # loopback et le VPN, comme le dashboard.
-      - LANGFLOW_AUTO_LOGIN=true
-      - LANGFLOW_SKIP_AUTH_AUTO_LOGIN=true
-      # Pas de LANGFLOW_SECRET_KEY : Langflow en génère une et la persiste dans
-      # le volume langflow_data. La fixer à la main casserait les variables
-      # chiffrées si elle changeait.
-      # La protection SSRF de Langflow bloque les IP privées : sans cette liste,
-      # les composants refusent de joindre les autres conteneurs de la stack.
-      - LANGFLOW_SSRF_ALLOWED_HOSTS=ollama,langflow-bridge,searxng,localhost,127.0.0.1
-      # Importe la variable comme "global variable" utilisable dans les composants
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - LANGFLOW_VARIABLES_TO_GET_FROM_ENVIRONMENT=OLLAMA_BASE_URL
-
-  # Traduit l'API OpenAI (ce que parle Open WebUI) vers /api/v1/run de Langflow.
-  langflow-bridge:
-    build: ./langflow-bridge
-    container_name: langflow-bridge
-    restart: unless-stopped
-    depends_on:
-      - langflow
-    ports:
-      # Exposé seulement pour le débogage ; Open WebUI l'atteint par le réseau interne.
-      - "127.0.0.1:7861:7861"
-    environment:
-      - LANGFLOW_URL=http://langflow:7860
-      - INCLUDE_EXAMPLE_FLOWS=false
-
-  # Métamoteur de recherche : c'est lui qui donne l'accès au web aux modèles.
-  # Aucune clé d'API à gérer, aucune requête envoyée à un service tiers nominatif.
-  searxng:
-    image: searxng/searxng:latest
-    container_name: searxng
-    restart: unless-stopped
-    volumes:
-      - ./searxng:/etc/searxng:rw
-    ports:
-      # 8081 côté hôte : le dashboard occupe déjà 8080.
-      - "127.0.0.1:8081:8080"
-      - "10.8.0.1:8081:8080"
-    environment:
-      - SEARXNG_BASE_URL=http://localhost:8081/
-      - SEARXNG_SECRET=${SEARXNG_SECRET}
-      - UWSGI_WORKERS=4
-      - UWSGI_THREADS=4
-    cap_drop:
-      - ALL
-    cap_add:
-      - CHOWN
-      - SETGID
-      - SETUID
+networks:
+  # Reseau par defaut du socle, avec un nom fixe pour que les autres projets
+  # puissent s'y brancher (`networks: llm-net: external: true`).
+  default:
+    name: llm-net
 
 volumes:
   ollama_data:
-  langflow_data:
-  webui_data:
-    external: true
-    name: open-webui

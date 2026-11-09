@@ -4,6 +4,7 @@ import PageHeader from "../components/PageHeader.jsx";
 import Panel from "../components/Panel.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
 import { api } from "../lib/api.js";
+import { useI18n } from "../lib/i18n.jsx";
 import { usePolling } from "../lib/usePolling.js";
 import "./pages.css";
 import "./Settings.css";
@@ -12,27 +13,31 @@ const SETTINGS = [
   {
     key: "OLLAMA_BASE_URL",
     field: "ollama_base_url",
-    help: "Adresse de l'API Ollama vue par le backend.",
+    help: (t) => t("settings.help.ollama"),
   },
   {
     key: "STACK_DIR",
     field: "stack_dir",
-    help: "Dossier où sont lus prompts/ et modelfiles/.",
+    help: (t) => t("settings.help.stack"),
   },
   {
     key: "GPU_TOTAL_VRAM_GB",
     field: "gpu_total_vram_gb",
-    help: "Total affiché dans la jauge VRAM, le conteneur ne peut pas le lire sur le GPU.",
+    help: (t) => t("settings.help.vram"),
   },
   {
     key: "SERVICES_FILE",
     field: "services_file",
-    help: (config) =>
+    help: (t, config) =>
       config.services_error
-        ? `Illisible : ${config.services_error}`
+        ? t("settings.help.servicesError", config.services_error)
         : config.services.length
-          ? `${config.services.length} service${config.services.length > 1 ? "s" : ""} déclaré${config.services.length > 1 ? "s" : ""} : ${config.services.map((s) => s.name).join(", ")}.`
-          : "Aucun service déclaré : la section Services est masquée.",
+          ? t(
+              "settings.help.servicesDeclared",
+              config.services.length,
+              config.services.map((s) => s.name).join(", ")
+            )
+          : t("settings.help.servicesNone"),
   },
 ];
 
@@ -59,6 +64,7 @@ async function copyText(text) {
 
 function CopyButton({ value, label }) {
   const [state, setState] = useState("idle");
+  const { t } = useI18n();
   async function onClick() {
     try {
       await copyText(value);
@@ -69,9 +75,13 @@ function CopyButton({ value, label }) {
     setTimeout(() => setState("idle"), 2000);
   }
   return (
-    <Button variant="ghost" size="small" onClick={onClick} aria-label={`Copier ${label}`}>
+    <Button variant="ghost" size="small" onClick={onClick} aria-label={t("settings.copyLabel", label)}>
       <span aria-live="polite">
-        {state === "done" ? "Copié" : state === "failed" ? "Échec" : "Copier"}
+        {state === "done"
+          ? t("settings.copied")
+          : state === "failed"
+            ? t("settings.copyFailed")
+            : t("settings.copy")}
       </span>
     </Button>
   );
@@ -79,22 +89,23 @@ function CopyButton({ value, label }) {
 
 export default function Settings() {
   const { data, error, phase, refresh } = usePolling(api.config);
+  const { t } = useI18n();
 
   return (
     <>
       <PageHeader
-        title="Paramètres"
-        meta="Lecture seule. Ces valeurs viennent de l'environnement du conteneur."
+        title={t("settings.title")}
+        meta={t("settings.meta")}
       />
       <div className="stack">
         <Panel>
-          {phase === "loading" && <SkeletonRows count={3} label="Lecture de la configuration" />}
+          {phase === "loading" && <SkeletonRows count={3} label={t("settings.reading")} />}
           {phase === "unavailable" && (
             <p className="panel-empty">
-              <strong>Configuration illisible</strong>
+              <strong>{t("settings.unreadable")}</strong>
               {error?.message}{" "}
               <Button size="small" onClick={refresh}>
-                Réessayer
+                {t("common.retry")}
               </Button>
             </p>
           )}
@@ -108,7 +119,7 @@ export default function Settings() {
                     <dd className="setting-value">
                       <span className="mono">{value}</span>
                       <span className="soft">
-                        {typeof setting.help === "function" ? setting.help(data) : setting.help}
+                        {setting.help(t, data)}
                       </span>
                     </dd>
                     <dd className="setting-action">

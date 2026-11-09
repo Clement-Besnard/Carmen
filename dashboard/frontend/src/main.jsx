@@ -12,15 +12,18 @@ import "./styles/tokens.css";
 import "./styles/base.css";
 
 import App from "./App.jsx";
+import { I18nProvider } from "./lib/i18n.jsx";
 import { RouterProvider } from "./lib/router.jsx";
 import { StackProvider } from "./lib/stack.jsx";
 
 createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <RouterProvider>
-      <StackProvider>
-        <App />
-      </StackProvider>
-    </RouterProvider>
+    <I18nProvider>
+      <RouterProvider>
+        <StackProvider>
+          <App />
+        </StackProvider>
+      </RouterProvider>
+    </I18nProvider>
   </React.StrictMode>
 );

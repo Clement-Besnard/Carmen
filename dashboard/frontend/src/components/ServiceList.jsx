@@ -1,3 +1,4 @@
+import { translate as t, useI18n } from "../lib/i18n.jsx";
 import StatusDot from "./StatusDot.jsx";
 import "./ServiceList.css";
 
@@ -11,20 +12,14 @@ function hostOf(url) {
 }
 
 function stateText(service) {
-  return service.up ? `${service.latency_ms} ms` : "injoignable";
+  return service.up ? `${service.latency_ms} ms` : t("services.unreachable");
 }
 
 /** Quoi verifier quand un service ne repond pas. */
 function Diagnostic({ service }) {
-  return service.container ? (
-    <>
-      Pas de réponse. Vérifier avec <code>docker logs {service.container}</code>
-    </>
-  ) : (
-    <>
-      Pas de réponse sur <code>{service.url}</code> depuis le dashboard.
-    </>
-  );
+  return service.container
+    ? t("services.diagContainer", service.container)
+    : t("services.diagUrl", service.url);
 }
 
 /**
@@ -33,6 +28,7 @@ function Diagnostic({ service }) {
  * Le lien "Ouvrir" n'apparait que si le service declare un `link`.
  */
 export default function ServiceList({ services, compact = false }) {
+  useI18n(); // re-rendu au changement de langue
   return (
     <ul className={`service-list${compact ? " service-list--compact" : ""}`}>
       {services.map((service) => (
@@ -41,7 +37,7 @@ export default function ServiceList({ services, compact = false }) {
             {compact && service.link ? (
               <a href={service.link} target="_blank" rel="noreferrer" className="service-name">
                 {service.name}
-                <span className="visually-hidden"> (nouvel onglet)</span>
+                <span className="visually-hidden"> {t("common.newTab")}</span>
               </a>
             ) : (
               <span className="service-name">{service.name}</span>
@@ -65,8 +61,9 @@ export default function ServiceList({ services, compact = false }) {
             <span className="service-link">
               {service.link && (
                 <a href={service.link} target="_blank" rel="noreferrer" className="text-link">
-                  Ouvrir<span aria-hidden="true"> ↗</span>
-                  <span className="visually-hidden"> {service.name} (nouvel onglet)</span>
+                  {t("common.open")}
+                  <span aria-hidden="true"> ↗</span>
+                  <span className="visually-hidden"> {service.name} {t("common.newTab")}</span>
                 </a>
               )}
             </span>

@@ -1,3 +1,4 @@
+import { translate } from "../lib/i18n.jsx";
 import "./Button.css";
 
 /**
@@ -21,7 +22,7 @@ export default function Button({
       <a className={classes} href={href} target="_blank" rel="noreferrer" {...props}>
         {children}
         <span aria-hidden="true">↗</span>
-        <span className="visually-hidden"> (nouvel onglet)</span>
+        <span className="visually-hidden"> {translate("common.newTab")}</span>
       </a>
     );
   }

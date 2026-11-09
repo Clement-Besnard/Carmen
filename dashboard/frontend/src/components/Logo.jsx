@@ -2,9 +2,9 @@
  * Icone de Carmen : un C qui se remplit comme la jauge VRAM.
  * Meme dessin que public/favicon.svg (a garder synchrones).
  */
-export default function Logo({ size = 22 }) {
+export default function Logo({ size = "1.375rem" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+    <svg style={{ width: size, height: size, flex: "none" }} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
       <rect width="64" height="64" rx="14" fill="var(--color-accent)" />
       <path
         d="M45.02 21.07A17 17 0 1 0 45.02 42.93"

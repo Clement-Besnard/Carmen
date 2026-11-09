@@ -1,6 +1,6 @@
 .setting {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) auto;
+  grid-template-columns: 11.25rem minmax(0, 1fr) auto;
   gap: var(--space-4);
   align-items: baseline;
   padding: var(--space-3) var(--space-4);

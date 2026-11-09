@@ -27,7 +27,7 @@
 }
 
 .search-field {
-  width: 180px;
+  width: 11.25rem;
   height: var(--control-height);
   padding: 0 var(--space-3);
   border: var(--stroke) solid var(--color-line-strong);

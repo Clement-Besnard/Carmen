@@ -1,3 +1,4 @@
+import { translate } from "../lib/i18n.jsx";
 import "./Skeleton.css";
 
 /** Bloc de remplacement a l'emplacement exact du contenu attendu. */
@@ -6,7 +7,7 @@ export default function Skeleton({ width = "100%", height = "0.9em" }) {
 }
 
 /** N lignes de squelette, au format des lignes de liste d'un panneau. */
-export function SkeletonRows({ count = 3, label = "Chargement" }) {
+export function SkeletonRows({ count = 3, label = translate("common.loading") }) {
   return (
     <ul className="skeleton-rows" aria-busy="true" aria-label={label}>
       {Array.from({ length: count }, (_, i) => (

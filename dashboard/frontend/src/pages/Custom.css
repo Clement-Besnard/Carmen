@@ -1,6 +1,6 @@
 .custom-layout {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
+  grid-template-columns: 13.75rem minmax(0, 1fr);
   gap: var(--space-3);
   align-items: start;
 }
@@ -73,7 +73,7 @@
 .editor-field {
   display: block;
   width: 100%;
-  min-height: 420px;
+  min-height: 26rem;
   padding: var(--space-4);
   border: 0;
   border-top: var(--stroke) solid var(--color-line-soft);

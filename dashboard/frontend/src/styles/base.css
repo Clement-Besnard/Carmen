@@ -6,7 +6,13 @@
   box-sizing: border-box;
 }
 
+/*
+ * Taille de base fluide : 16 px jusqu'a 1440 px de large, ~18 px en 1920,
+ * 19 px au plus. Tout ce qui est en rem suit. En pourcentage pour respecter
+ * la taille de police choisie dans le navigateur.
+ */
 html {
+  font-size: clamp(100%, 62.5% + 0.4167vw, 118.75%);
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
 }

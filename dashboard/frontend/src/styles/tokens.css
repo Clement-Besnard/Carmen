@@ -73,11 +73,11 @@
   --stroke-strong: 2px;
 
   /* ---------- layout ---------- */
-  --sidebar-width: 216px;
-  --content-max: 1120px;
-  --control-height: 32px;
-  --control-height-s: 28px;
-  --tabbar-height: 56px;
+  --sidebar-width: 13.5rem;
+  --content-max: 72rem;
+  --control-height: 2rem;
+  --control-height-s: 1.75rem;
+  --tabbar-height: 3.5rem;
   --gutter: clamp(var(--space-4), 3vw, var(--space-7));
 
   /* ---------- mouvement ---------- */

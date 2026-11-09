@@ -1,0 +1,70 @@
+/*
+ * Pilule FR | EN : un curseur blanc coulisse sous la langue active.
+ * Memes codes que le menu : case blanche a filet, texte framboise.
+ */
+
+/* ---------- pied de menu (desktop) ---------- */
+
+.lang-switch--sidebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  /* Filet sur toute la largeur de la barre laterale. */
+  margin: 0 calc(-1 * var(--space-3));
+  padding: var(--space-4) var(--space-3) 0 calc(var(--space-3) * 2);
+  border-top: var(--stroke) solid var(--color-line);
+}
+
+.lang-title {
+  color: var(--color-text-soft);
+  font-size: var(--text-sm);
+}
+
+/* ---------- pilule ---------- */
+
+.lang-pill {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--lang-count), 1fr);
+  padding: 3px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-line) 70%, var(--color-sidebar));
+}
+
+.lang-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--lang-count));
+  border-radius: var(--radius-pill);
+  background: var(--color-panel);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-text) 14%, transparent);
+  transform: translateX(calc(100% * var(--lang-index)));
+  transition: transform var(--duration-slow) var(--ease);
+}
+
+.lang-option {
+  position: relative; /* au-dessus du curseur */
+  min-width: 2.5rem;
+  padding: 0.25rem var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-soft);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: var(--leading);
+  cursor: pointer;
+  transition: color var(--duration) var(--ease);
+}
+
+.lang-option:hover {
+  color: var(--color-text);
+}
+
+.lang-option[aria-pressed="true"] {
+  color: var(--color-accent-strong);
+  font-weight: var(--weight-medium);
+}

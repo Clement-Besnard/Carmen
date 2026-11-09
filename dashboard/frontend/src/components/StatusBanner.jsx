@@ -1,5 +1,6 @@
 import { useStack } from "../lib/stack.jsx";
 import { clockTime } from "../lib/format.js";
+import { useI18n } from "../lib/i18n.jsx";
 import Banner from "./Banner.jsx";
 import Button from "./Button.jsx";
 
@@ -9,29 +10,20 @@ import Button from "./Button.jsx";
  */
 export default function StatusBanner() {
   const { error, stale, lastSuccess, status, refresh } = useStack();
+  const { t } = useI18n();
   if (!error) return null;
 
   const copy = {
     ollama: {
-      title: "Ollama ne répond pas",
-      body: (
-        <>
-          Le backend n'atteint pas <code>{status?.ollama_url ?? "l'API Ollama"}</code>.
-          Vérifier avec <code>docker compose ps ollama</code>.
-        </>
-      ),
+      title: t("banner.ollama.title"),
+      body: t("banner.ollama.body", status?.ollama_url),
     },
     backend: {
-      title: "Le dashboard ne répond plus",
-      body: (
-        <>
-          Le navigateur n'atteint pas le serveur FastAPI. Ses journaux :{" "}
-          <code>docker compose logs dashboard</code>.
-        </>
-      ),
+      title: t("banner.backend.title"),
+      body: t("banner.backend.body"),
     },
     http: {
-      title: "L'opération a échoué",
+      title: t("banner.http.title"),
       body: <code className="banner-detail">{error.message}</code>,
     },
   }[error.kind ?? "http"];
@@ -41,16 +33,13 @@ export default function StatusBanner() {
       title={copy.title}
       action={
         <Button size="small" onClick={refresh}>
-          Réessayer
+          {t("common.retry")}
         </Button>
       }
     >
       <p>{copy.body}</p>
       {stale && error.kind !== "http" && (
-        <p className="banner-meta">
-          Les valeurs affichées sont les dernières connues, relevées à{" "}
-          {clockTime(lastSuccess)}.
-        </p>
+        <p className="banner-meta">{t("banner.stale", clockTime(lastSuccess))}</p>
       )}
     </Banner>
   );

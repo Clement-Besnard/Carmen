@@ -5,7 +5,8 @@ import Panel from "../components/Panel.jsx";
 import ServiceList from "../components/ServiceList.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
 import { api } from "../lib/api.js";
-import { gigabytesRound } from "../lib/format.js";
+import { gbUnit, gigabytesRound } from "../lib/format.js";
+import { useI18n } from "../lib/i18n.jsx";
 import { Link } from "../lib/router.jsx";
 import { useStack } from "../lib/stack.jsx";
 import { usePolling } from "../lib/usePolling.js";
@@ -15,29 +16,30 @@ const SERVICES_POLL_MS = 15000;
 
 function ModelsPanel() {
   const { phase, models, diskTotal } = useStack();
+  const { t } = useI18n();
   return (
     <Panel
-      title="Modèles"
+      title={t("nav.models")}
       titleId="overview-models"
       meta={
         phase === "ready"
-          ? `${models.length} modèle${models.length > 1 ? "s" : ""} · ${gigabytesRound(diskTotal)} Go sur disque`
+          ? t("overview.modelsMeta", models.length, gigabytesRound(diskTotal), gbUnit())
           : null
       }
       actions={
         <Link to="/modeles" className="text-link">
-          Tout voir
+          {t("overview.seeAll")}
         </Link>
       }
     >
-      {phase === "loading" && <SkeletonRows label="Chargement des modèles" />}
+      {phase === "loading" && <SkeletonRows label={t("overview.loadingModels")} />}
       {phase === "unavailable" && (
-        <p className="panel-empty">Liste indisponible tant qu'Ollama ne répond pas.</p>
+        <p className="panel-empty">{t("overview.modelsUnavailable")}</p>
       )}
       {phase === "ready" && models.length === 0 && (
         <p className="panel-empty">
-          <strong>Aucun modèle installé</strong>
-          Récupérer un modèle avec <code>docker exec ollama ollama pull qwen3:8b</code>.
+          <strong>{t("overview.noModels")}</strong>
+          {t("overview.noModelsBody")}
         </p>
       )}
       {phase === "ready" && models.length > 0 && <ModelTable models={models} compact />}
@@ -50,20 +52,23 @@ function ServicesPanel() {
   const services = usePolling(api.services, SERVICES_POLL_MS);
   const list = services.data?.services ?? [];
   const upCount = list.filter((s) => s.up).length;
+  const { t } = useI18n();
   return (
     <Panel
-      title="Services"
+      title={t("nav.services")}
       titleId="overview-services"
-      meta={services.data ? `${upCount} sur ${list.length}` : null}
+      meta={services.data ? t("overview.servicesMeta", upCount, list.length) : null}
       actions={
         <Link to="/services" className="text-link">
-          Détails
+          {t("overview.details")}
         </Link>
       }
     >
-      {services.phase === "loading" && <SkeletonRows count={2} label="Vérification des services" />}
+      {services.phase === "loading" && (
+        <SkeletonRows count={2} label={t("overview.checkingServices")} />
+      )}
       {services.phase === "unavailable" && (
-        <p className="panel-empty">Impossible de vérifier les services.</p>
+        <p className="panel-empty">{t("overview.servicesUnavailable")}</p>
       )}
       {services.data && <ServiceList services={list} compact />}
     </Panel>
@@ -72,12 +77,11 @@ function ServicesPanel() {
 
 export default function Overview() {
   const { hasServices } = useStack();
+  const { t } = useI18n();
 
   return (
     <>
-      <PageHeader
-        title="Vue d'ensemble"
-      />
+      <PageHeader title={t("overview.title")} />
       <div className="stack">
         <GpuPanel />
         {hasServices ? (

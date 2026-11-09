@@ -1,4 +1,4 @@
-# Carmen — dashboard
+# Carmen - dashboard
 
 Interface web pour piloter Ollama : charger / décharger les modèles en VRAM,
 rebuild les modèles custom depuis leur prompt système, et — si on en déclare —

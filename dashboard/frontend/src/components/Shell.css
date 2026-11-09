@@ -46,7 +46,7 @@
 
 .nav--sidebar .nav-link {
   display: block;
-  padding: 6px var(--space-3);
+  padding: 0.375rem var(--space-3);
   border-radius: var(--radius);
   color: var(--color-text-soft);
   text-decoration: none;
@@ -74,9 +74,14 @@
 /* ---------- contenu ---------- */
 
 .content {
-  max-width: calc(var(--content-max) + var(--sidebar-width));
   margin-left: var(--sidebar-width);
   padding: var(--space-5) var(--gutter) var(--space-8);
+}
+
+/* Contenu centre dans l'espace a droite du menu, largeur bornee. */
+.content-inner {
+  max-width: var(--content-max);
+  margin-inline: auto;
 }
 
 /* ---------- mobile ---------- */

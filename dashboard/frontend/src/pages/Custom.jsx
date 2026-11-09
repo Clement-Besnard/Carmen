@@ -5,16 +5,16 @@ import Panel from "../components/Panel.jsx";
 import Skeleton, { SkeletonRows } from "../components/Skeleton.jsx";
 import { api } from "../lib/api.js";
 import { clockTime } from "../lib/format.js";
+import { useI18n } from "../lib/i18n.jsx";
 import { Link, useLeaveGuard } from "../lib/router.jsx";
 import { useStack } from "../lib/stack.jsx";
 import "./pages.css";
 import "./Custom.css";
 
-const LEAVE_MESSAGE = "Le prompt a des modifications non enregistrées. Quitter quand même ?";
-
 function CustomNav({ customs, selected }) {
+  const { t } = useI18n();
   return (
-    <Panel title="Modèles" titleId="custom-list">
+    <Panel title={t("custom.list")} titleId="custom-list">
       <ul className="custom-nav">
         {customs.map((custom) => (
           <li key={custom.name}>
@@ -35,11 +35,12 @@ function CustomNav({ customs, selected }) {
 
 function ModelfileFacts({ custom }) {
   const params = Object.entries(custom.parameters ?? {});
+  const { t } = useI18n();
   return (
-    <Panel title="Modelfile" titleId="custom-modelfile">
+    <Panel title={t("custom.modelfile")} titleId="custom-modelfile">
       <dl className="facts">
         <div>
-          <dt>Base</dt>
+          <dt>{t("custom.base")}</dt>
           <dd className="mono">{custom.base}</dd>
         </div>
         {params.map(([key, value]) => (
@@ -58,11 +59,13 @@ function Editor({ custom, onSaved }) {
   const { busy, runOn } = useStack();
   const [draft, setDraft] = useState(custom.prompt);
   const [action, setAction] = useState(null); // "save" | "rebuild" | null
-  const [result, setResult] = useState(null); // { text, at }
+  // { key, at } : on garde la cle, pas le texte, pour suivre un changement de langue.
+  const [result, setResult] = useState(null);
+  const { t } = useI18n();
 
   const dirty = draft !== custom.prompt;
   const working = busy === custom.name;
-  useLeaveGuard(dirty, LEAVE_MESSAGE);
+  useLeaveGuard(dirty, t("custom.leave"));
 
   const run = useCallback(
     async (kind) => {
@@ -75,11 +78,11 @@ function Editor({ custom, onSaved }) {
           if (kind === "rebuild") {
             const rebuilt = await api.rebuild(custom.name);
             setResult({
-              text: rebuilt.reloaded ? "Rebuild terminé, modèle rechargé en VRAM" : "Rebuild terminé",
+              key: rebuilt.reloaded ? "custom.rebuiltReloaded" : "custom.rebuilt",
               at: new Date(),
             });
           } else {
-            setResult({ text: "Enregistré", at: new Date() });
+            setResult({ key: "custom.saved", at: new Date() });
           }
         });
       } catch {
@@ -102,23 +105,23 @@ function Editor({ custom, onSaved }) {
 
   const state = working
     ? action === "rebuild"
-      ? "Rebuild en cours… le modèle est recréé dans Ollama."
-      : "Enregistrement…"
+      ? t("custom.rebuilding")
+      : t("custom.saving")
     : dirty
-      ? "Modifié, non enregistré"
+      ? t("custom.dirty")
       : result
-        ? `${result.text} à ${clockTime(result.at)}`
-        : "À jour";
+        ? t("custom.resultAt", t(result.key), clockTime(result.at))
+        : t("custom.upToDate");
 
   return (
     <Panel
-      title="Prompt système"
+      title={t("custom.prompt")}
       titleId="custom-prompt"
       meta={<span className="mono">{custom.prompt_path}</span>}
       className="editor"
     >
       <label htmlFor="prompt-editor" className="visually-hidden">
-        Prompt système de {custom.name}
+        {t("custom.promptLabel", custom.name)}
       </label>
       <textarea
         id="prompt-editor"
@@ -134,14 +137,18 @@ function Editor({ custom, onSaved }) {
           <span data-dirty={dirty || undefined} className="editor-state">
             {state}
           </span>{" "}
-          · {draft.length} caractères
+          · {t("custom.chars", draft.length)}
         </p>
         <div className="editor-actions">
           <Button disabled={!dirty || working} onClick={() => run("save")}>
-            {working && action === "save" ? "Enregistrement…" : "Enregistrer"}
+            {working && action === "save" ? t("custom.saving") : t("custom.save")}
           </Button>
           <Button variant="primary" disabled={working} onClick={() => run("rebuild")}>
-            {working && action === "rebuild" ? "Rebuild…" : dirty ? "Enregistrer et rebuild" : "Rebuild"}
+            {working && action === "rebuild"
+              ? t("custom.rebuildBusy")
+              : dirty
+                ? t("custom.saveAndRebuild")
+                : t("custom.rebuild")}
           </Button>
         </div>
       </footer>
@@ -152,6 +159,7 @@ function Editor({ custom, onSaved }) {
 export default function Custom({ name }) {
   const [customs, setCustoms] = useState(null);
   const [loadError, setLoadError] = useState(null);
+  const { t } = useI18n();
 
   const load = useCallback(() => {
     setLoadError(null);
@@ -179,13 +187,13 @@ export default function Custom({ name }) {
   if (loadError) {
     return (
       <>
-        <PageHeader title="Modèles custom" meta="Lecture impossible" />
+        <PageHeader title={t("custom.title")} meta={t("custom.readFailedMeta")} />
         <Panel>
           <p className="panel-empty">
-            <strong>Les modèles custom n'ont pas pu être lus</strong>
+            <strong>{t("custom.readFailed")}</strong>
             {loadError.message}{" "}
             <Button size="small" onClick={load}>
-              Réessayer
+              {t("common.retry")}
             </Button>
           </p>
         </Panel>
@@ -196,10 +204,10 @@ export default function Custom({ name }) {
   if (!customs) {
     return (
       <>
-        <PageHeader title="Modèles custom" meta="Lecture des Modelfiles…" />
+        <PageHeader title={t("custom.title")} meta={t("custom.readingMeta")} />
         <div className="custom-layout">
           <Panel>
-            <SkeletonRows count={2} label="Chargement des modèles custom" />
+            <SkeletonRows count={2} label={t("custom.loading")} />
           </Panel>
           <Panel>
             <div className="editor-skeleton">
@@ -216,13 +224,11 @@ export default function Custom({ name }) {
   if (customs.length === 0) {
     return (
       <>
-        <PageHeader title="Modèles custom" />
+        <PageHeader title={t("custom.title")} />
         <Panel>
           <p className="panel-empty">
-            <strong>Aucun modèle custom</strong>
-            Un modèle custom, c'est un prompt dans <code>prompts/&lt;nom&gt;.md</code> et un{" "}
-            <code>modelfiles/&lt;nom&gt;.Modelfile</code>. Créer les deux, puis revenir ici pour
-            l'éditer et le reconstruire.
+            <strong>{t("custom.none")}</strong>
+            {t("custom.noneBody")}
           </p>
         </Panel>
       </>
@@ -232,7 +238,7 @@ export default function Custom({ name }) {
   if (!selected) {
     return (
       <>
-        <PageHeader title="Modèles custom" meta={`Aucun modèle custom ne s'appelle « ${name} ».`} />
+        <PageHeader title={t("custom.title")} meta={t("custom.notFound", name)} />
         <div className="custom-layout">
           <CustomNav customs={customs} selected={null} />
         </div>
@@ -242,7 +248,7 @@ export default function Custom({ name }) {
 
   return (
     <>
-      <PageHeader title={selected.name} mono crumb="Modèles custom /" />
+      <PageHeader title={selected.name} mono crumb={t("custom.crumb")} />
       <div className="custom-layout">
         <div className="stack">
           <CustomNav customs={customs} selected={selected.name} />

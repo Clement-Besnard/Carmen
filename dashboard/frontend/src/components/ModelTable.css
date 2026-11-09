@@ -1,6 +1,6 @@
 .model-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 64px 76px 72px 72px 40px;
+  grid-template-columns: minmax(0, 1fr) 4rem 4.75rem 4.5rem 4.5rem 2.5rem;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3) var(--space-4);
@@ -9,7 +9,7 @@
 }
 
 .model-table--compact .model-row {
-  grid-template-columns: minmax(0, 1fr) 56px 64px 40px;
+  grid-template-columns: minmax(0, 1fr) 3.5rem 4rem 2.5rem;
 }
 
 .model-head {
@@ -69,13 +69,15 @@
     gap: var(--space-1) var(--space-3);
   }
 
-  .model-head {
+  /* Specificite relevee : la regle .model-table--compact .model-row ci-dessus
+     reafficherait l'en-tete sur l'accueil. */
+  .model-table .model-head {
     display: none;
   }
 
   /* Nom + bascule remplissent la 1re ligne : les details passent dessous. */
   .model-main {
-    flex: 1 1 calc(100% - 30px - var(--space-3));
+    flex: 1 1 calc(100% - 1.875rem - var(--space-3));
   }
 
   .model-action {

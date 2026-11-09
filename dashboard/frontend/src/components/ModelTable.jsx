@@ -1,5 +1,6 @@
 import { useStack } from "../lib/stack.jsx";
-import { gigabytes, humanBytes, splitModelName } from "../lib/format.js";
+import { gbUnit, gigabytes, humanBytes, splitModelName } from "../lib/format.js";
+import { translate as t, useI18n } from "../lib/i18n.jsx";
 import Toggle from "./Toggle.jsx";
 import "./ModelTable.css";
 
@@ -9,17 +10,17 @@ import "./ModelTable.css";
  */
 function rowStatus(model, { busy, loadedModel }) {
   if (busy === model.name) {
-    if (model.loaded) return "Déchargement…";
+    if (model.loaded) return t("table.unloading");
     return loadedModel
-      ? `Chargement… remplace ${splitModelName(loadedModel.name).base}`
-      : "Chargement…";
+      ? t("table.loadingReplaces", splitModelName(loadedModel.name).base)
+      : t("table.loading");
   }
-  return model.base ? `basé sur ${model.base}` : null;
+  return model.base ? t("common.basedOn", model.base) : null;
 }
 
 /** Place sur le disque : un derive ne compte que ce qu'il ajoute. */
 function diskLabel(model) {
-  return model.base ? humanBytes(model.disk_size) : `${gigabytes(model.disk_size)} Go`;
+  return model.base ? humanBytes(model.disk_size) : `${gigabytes(model.disk_size)} ${gbUnit()}`;
 }
 
 function ModelName({ name, custom }) {
@@ -39,17 +40,18 @@ function ModelName({ name, custom }) {
  */
 export default function ModelTable({ models, compact = false }) {
   const stack = useStack();
+  useI18n(); // re-rendu au changement de langue
   const { busy, toggleModel } = stack;
   const busyModel = models.find((m) => m.name === busy);
 
   return (
     <div className={`model-table${compact ? " model-table--compact" : ""}`}>
       <div className="model-row model-head" aria-hidden="true">
-        <span>Nom</span>
-        <span>Taille</span>
-        {!compact && <span>Quantif.</span>}
-        {!compact && <span>Disque</span>}
-        <span>VRAM</span>
+        <span>{t("table.name")}</span>
+        <span>{t("table.size")}</span>
+        {!compact && <span>{t("table.quant")}</span>}
+        {!compact && <span>{t("table.disk")}</span>}
+        <span>{t("table.vram")}</span>
         <span />
       </div>
       <ul>
@@ -70,32 +72,32 @@ export default function ModelTable({ models, compact = false }) {
                 )}
               </span>
               <span className="model-cell">
-                <span className="model-label">Taille </span>
+                <span className="model-label">{t("table.size")} </span>
                 {model.parameter_size ?? "—"}
               </span>
               {!compact && (
                 <span className="model-cell mono">
-                  <span className="model-label">Quantif. </span>
+                  <span className="model-label">{t("table.quant")} </span>
                   {model.quantization ?? "—"}
                 </span>
               )}
               {!compact && (
                 <span
                   className="model-cell mono"
-                  title={model.base ? `Poids partagés avec ${model.base}` : undefined}
+                  title={model.base ? t("table.sharedWith", model.base) : undefined}
                 >
-                  <span className="model-label">Disque </span>
+                  <span className="model-label">{t("table.disk")} </span>
                   {diskLabel(model)}
                 </span>
               )}
               <span className={`model-cell mono${model.loaded ? "" : " soft"}`}>
-                <span className="model-label">VRAM </span>
-                {model.loaded ? `${gigabytes(model.size_vram)} Go` : "—"}
+                <span className="model-label">{t("table.vram")} </span>
+                {model.loaded ? `${gigabytes(model.size_vram)} ${gbUnit()}` : "—"}
               </span>
               <span className="model-action">
                 <Toggle
                   checked={model.loaded}
-                  label={`${model.loaded ? "Décharger" : "Charger"} ${model.name}`}
+                  label={t(model.loaded ? "table.unload" : "table.load", model.name)}
                   busy={isBusy}
                   disabled={paused}
                   onChange={() => toggleModel(model)}

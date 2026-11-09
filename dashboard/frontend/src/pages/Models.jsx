@@ -4,12 +4,14 @@ import ModelTable from "../components/ModelTable.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Panel from "../components/Panel.jsx";
 import { SkeletonRows } from "../components/Skeleton.jsx";
+import { useI18n } from "../lib/i18n.jsx";
 import { useStack } from "../lib/stack.jsx";
 import "./pages.css";
 
 export default function Models() {
   const { phase, models, status } = useStack();
   const [query, setQuery] = useState("");
+  const { t } = useI18n();
 
   const needle = query.trim().toLowerCase();
   const visible = needle ? models.filter((m) => m.name.toLowerCase().includes(needle)) : models;
@@ -17,7 +19,7 @@ export default function Models() {
   return (
     <>
       <PageHeader
-        title="Modèles"
+        title={t("models.title")}
         actions={
           <>
             {/* Repere discret : la version d'Ollama qui sert ces modeles. */}
@@ -27,13 +29,13 @@ export default function Models() {
             {models.length > 4 && (
               <>
                 <label htmlFor="model-filter" className="visually-hidden">
-                  Filtrer les modèles
+                  {t("models.filterLabel")}
                 </label>
                 <input
                   id="model-filter"
                   type="search"
                   className="search-field"
-                  placeholder="Filtrer"
+                  placeholder={t("models.filter")}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                 />
@@ -43,31 +45,29 @@ export default function Models() {
         }
       />
       <div className="stack">
-        <Notice>Un seul modèle tient en VRAM : en charger un autre décharge le précédent.</Notice>
+        <Notice>{t("models.notice")}</Notice>
         <Panel>
-          {phase === "loading" && <SkeletonRows count={4} label="Chargement des modèles" />}
+          {phase === "loading" && (
+            <SkeletonRows count={4} label={t("overview.loadingModels")} />
+          )}
           {phase === "unavailable" && (
             <p className="panel-empty">
-              <strong>Liste indisponible</strong>
-              Ollama ne répond pas, la liste reviendra dès qu'il sera joignable.
+              <strong>{t("models.unavailable")}</strong>
+              {t("models.unavailableBody")}
             </p>
           )}
           {phase === "ready" && models.length === 0 && (
             <p className="panel-empty">
-              <strong>Aucun modèle installé</strong>
-              Récupérer un modèle avec <code>docker exec ollama ollama pull qwen3:8b</code>, il
-              apparaîtra ici.
+              <strong>{t("models.none")}</strong>
+              {t("models.noneBody")}
             </p>
           )}
           {phase === "ready" && models.length > 0 && visible.length === 0 && (
-            <p className="panel-empty">Aucun modèle ne correspond à « {query} ».</p>
+            <p className="panel-empty">{t("models.noMatch", query)}</p>
           )}
           {phase === "ready" && visible.length > 0 && <ModelTable models={visible} />}
         </Panel>
-        <p className="page-footnote">
-          Pendant un chargement, les autres modèles sont en pause : un gros modèle peut mettre
-          plusieurs secondes à monter depuis le disque.
-        </p>
+        <p className="page-footnote">{t("models.footnote")}</p>
       </div>
     </>
   );

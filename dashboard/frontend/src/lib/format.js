@@ -1,22 +1,38 @@
 const GIB = 1024 ** 3;
 
-const decimal = new Intl.NumberFormat("fr-FR", {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
-const integer = new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 });
-const clock = new Intl.DateTimeFormat("fr-FR", {
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-});
+// Formats et unites suivent la langue de l'interface (cf. i18n.jsx).
+const LOCALES = { fr: "fr-FR", en: "en-GB" };
+const UNITS = {
+  fr: ["Ko", "Mo", "Go", "To"],
+  en: ["KB", "MB", "GB", "TB"],
+};
 
-/** 17703821638 -> "16,5" (Go, sans unite). */
+let lang = "fr";
+let decimal;
+let integer;
+let clock;
+
+export function setFormatLocale(next) {
+  lang = UNITS[next] ? next : "fr";
+  const locale = LOCALES[lang];
+  decimal = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  integer = new Intl.NumberFormat(locale, { maximumFractionDigits: 0 });
+  clock = new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+}
+
+setFormatLocale("fr");
+
+/** Unite du gigaoctet dans la langue courante : "Go" ou "GB". */
+export function gbUnit() {
+  return UNITS[lang][2];
+}
+
+/** 17703821638 -> "16,5" / "16.5" (sans unite). */
 export function gigabytes(bytes) {
   return decimal.format((bytes || 0) / GIB);
 }
 
-/** Total VRAM affiche sans decimale inutile : 24 Go et non 24,0 Go. */
+/** Total VRAM affiche sans decimale inutile : 24 et non 24,0. */
 export function gigabytesRound(bytes) {
   const value = (bytes || 0) / GIB;
   return Number.isInteger(Math.round(value * 10) / 10)
@@ -42,9 +58,9 @@ export function splitModelName(name) {
 
 /** Taille lisible a toute echelle : 1305 -> "1,3 Ko", 17741872154 -> "16,5 Go". */
 export function humanBytes(bytes) {
+  const units = UNITS[lang];
   const value = bytes || 0;
-  if (value < 1024) return value === 0 ? "0 Ko" : "< 1 Ko";
-  const units = ["Ko", "Mo", "Go", "To"];
+  if (value < 1024) return value === 0 ? `0 ${units[0]}` : `< 1 ${units[0]}`;
   let size = value / 1024;
   let unit = 0;
   while (size >= 1024 && unit < units.length - 1) {

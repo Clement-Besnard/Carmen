@@ -1,22 +1,26 @@
 import { useEffect, useRef } from "react";
 import { Link, isActive, useRouter } from "../lib/router.jsx";
+import { useI18n } from "../lib/i18n.jsx";
 import { useStack } from "../lib/stack.jsx";
+import LanguageSwitch from "./LanguageSwitch.jsx";
 import Logo from "./Logo.jsx";
 import StatusBanner from "./StatusBanner.jsx";
 import "./Shell.css";
 
 // `needsServices` : entree affichee seulement si des services sont declares.
+// `key` : cle de traduction (libelle complet, et `.short` pour les onglets mobiles).
 export const NAV_ITEMS = [
-  { to: "/", label: "Vue d'ensemble", short: "Accueil" },
-  { to: "/modeles", label: "Modèles", short: "Modèles" },
-  { to: "/custom", label: "Modèles custom", short: "Custom" },
-  { to: "/services", label: "Services", short: "Services", needsServices: true },
-  { to: "/parametres", label: "Paramètres", short: "Réglages" },
+  { to: "/", key: "nav.overview" },
+  { to: "/modeles", key: "nav.models" },
+  { to: "/custom", key: "nav.custom" },
+  { to: "/services", key: "nav.services", needsServices: true },
+  { to: "/parametres", key: "nav.settings" },
 ];
 
 function NavList({ variant }) {
   const { path } = useRouter();
   const { hasServices } = useStack();
+  const { t } = useI18n();
   const items = NAV_ITEMS.filter((item) => !item.needsServices || hasServices);
   return (
     <ul className={`nav nav--${variant}`}>
@@ -27,7 +31,7 @@ function NavList({ variant }) {
             className="nav-link"
             aria-current={isActive(path, item.to) ? "page" : undefined}
           >
-            {variant === "sidebar" ? item.label : item.short}
+            {t(variant === "sidebar" ? item.key : `${item.key}.short`)}
           </Link>
         </li>
       ))}
@@ -37,6 +41,7 @@ function NavList({ variant }) {
 
 export default function Shell({ children }) {
   const { path } = useRouter();
+  const { t } = useI18n();
   const firstRender = useRef(true);
 
   // Apres navigation, le focus va au titre de la nouvelle page : le lecteur
@@ -52,7 +57,7 @@ export default function Shell({ children }) {
   return (
     <div className="shell">
       <a className="skip-link" href="#content">
-        Aller au contenu
+        {t("skip")}
       </a>
 
       <aside className="sidebar">
@@ -60,9 +65,10 @@ export default function Shell({ children }) {
           <Logo />
           Carmen
         </Link>
-        <nav aria-label="Navigation principale">
+        <nav aria-label={t("nav.label")}>
           <NavList variant="sidebar" />
         </nav>
+        <LanguageSwitch />
       </aside>
 
       <header className="topbar">
@@ -70,14 +76,17 @@ export default function Shell({ children }) {
           <Logo />
           Carmen
         </Link>
+        <LanguageSwitch variant="compact" />
       </header>
 
       <main id="content" className="content">
-        <StatusBanner />
-        {children}
+        <div className="content-inner">
+          <StatusBanner />
+          {children}
+        </div>
       </main>
 
-      <nav className="tabbar" aria-label="Navigation principale">
+      <nav className="tabbar" aria-label={t("nav.label")}>
         <NavList variant="tabs" />
       </nav>
     </div>

@@ -1,6 +1,6 @@
 .service-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 180px) 112px 64px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 11.25rem) 7rem 4rem;
   gap: var(--space-3);
   align-items: center;
   padding: var(--space-3) var(--space-4);
